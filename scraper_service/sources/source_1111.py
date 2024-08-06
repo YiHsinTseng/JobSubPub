@@ -11,7 +11,7 @@ class Source1111(BaseSource):
         url = base_url + f'/search/job?ks={keyword}&page={page}'
         return base_url, url
 
-    def parse_source_job(self, base_url, soup=None, job=None):
+    def parse_source_job(self, base_url, keyword, soup=None, job=None):
         if soup:
             job_list = soup.find_all('div', class_='job-item')##抓錯標籤了
             total_count = int(soup.find('div', class_='left').find("p").find("span").string)
@@ -49,23 +49,6 @@ class Source1111(BaseSource):
                 job_exp = job_skill.find("span", class_="job_info_title", text="工作經驗：").find_next_sibling().get_text(separator='\n', strip=True)
             except Exception as e:
                 job_exp = None
-            
-            # return {
-            #     '職缺名稱': job_title,
-            #     '公司名稱': company_name,
-            #     "產業": industry,
-            #     "年資": job_exp,
-            #     '職缺描述': job_desc,
-            #     '薪資': job_salary,
-            #     "應徵人數": people,
-            #     "地區": place,
-            #     "更新日期": update,
-            #     "紀錄時間": datetime.fromtimestamp(time.time()).strftime('%Y-%-m-%-d %H:%M:%S'),
-            #     "來源": "1111",
-            #     "職缺網址": job_link,
-            #     "工作要求": job_info,
-            #     "附加條件": job_condition
-            # }
             job_instance = JobModel(
                 title=job_title,
                 company_name=company_name,
@@ -78,6 +61,7 @@ class Source1111(BaseSource):
                 update_date=update,
                 record_time=datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
                 source="1111",
+                keywords=keyword,
                 url=job_link,
                 requirements=job_info,
                 additional_conditions=job_condition

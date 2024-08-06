@@ -4,7 +4,8 @@ from bs4 import BeautifulSoup
 import time
 import pandas as pd
 import json
-import csv
+# import csv
+import psycopg2
 
 class JobService:
     def __init__(self, source):
@@ -13,6 +14,14 @@ class JobService:
         self.csv_file = "./data/jobs1111_20240807_node.csv"
         self.current_date_string = datetime.now().strftime("%Y%m%d")  # 当前日期字符串
 
+# PostgreSQL 連接設置
+        self.conn = psycopg2.connect(
+            host="localhost",
+            database="jobs",
+            user="test",
+            password="test"
+        )
+        self.cur = self.conn.cursor()
 
     def load_state(self):
         try:
@@ -42,6 +51,54 @@ class JobService:
     #             writer.writeheader()
     #         writer.writerows(jobs)
 
+    ## 現在都是複寫，那如何確保是刷新？
+    def insert_jobs_into_postgres(self, jobs):
+        try:
+            with self.conn.cursor() as cur:
+                for job in jobs:
+                    cur.execute("""
+                        INSERT INTO jobs (
+                            job_title, 
+                            company_name, 
+                            industry, 
+                            job_exp, 
+                            job_desc, 
+                            job_info, 
+                            job_condition, 
+                            job_salary, 
+                            people, 
+                            place, 
+                            update_date, 
+                            record_time, 
+                            source, 
+                            keywords, 
+                            job_link
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        )
+                    """, (
+                        job['title'],  
+                        job['company_name'],  
+                        job['industry'],  
+                        job['experience'],  
+                        job['description'],  
+                        json.dumps(job['requirements']),  
+                        job['additional_conditions'],  
+                        job['salary'],  
+                        job['applicants'],  
+                        job['location'],  
+                        job['update_date'],  
+                        job['record_time'],  
+                        job['source'],  
+                        job['keywords'],
+                        job['url']  
+                    ))
+                self.conn.commit()
+            print(f'成功將 {len(jobs)} 個職位信息插入到 PostgreSQL 表格中')
+        except Exception as e:
+            print(f'插入數據庫時出錯: {e}')
+            self.conn.rollback()
+
     def search_jobs(self, keyword):
         jobs = []
         state = self.load_state()
@@ -60,19 +117,20 @@ class JobService:
                 html_content = requests.get(url).text
                 soup = BeautifulSoup(html_content, 'html.parser')
 
-                joblist_dict = self.source.parse_source_job(base_url, soup=soup)
+                joblist_dict = self.source.parse_source_job(base_url,keyword,soup=soup)
                 job_list = joblist_dict["job_list"]
                 total_count = joblist_dict["total_count"]
 
                 remaining_count = total_count - jobs_count -len(jobs) - jump
                 if remaining_count <= 0:
                     break
-
+                
+                page_jobs = []
                 for job in job_list: ##恢復到上次的地方很麻煩，目前先以頁為主，重複沒關係，本來就應該以頁為單位存，但內存無法記憶
                     try:
-                        job_instance = self.source.parse_source_job(base_url, job=job)
+                        job_instance = self.source.parse_source_job(base_url,keyword, job=job)
                         jobs.append(job_instance.to_dict()) ##全局存
-                        ## 單頁存
+                        page_jobs.append(job_instance.to_dict())## 單頁存
                         in_page_count += 1
                     except Exception as e:
                         print(f'解析職缺資訊失敗: {e}')
@@ -80,9 +138,11 @@ class JobService:
                         ## skip 此處不會知道具體網址，只會知道是第幾頁的第幾個，錯誤發生在parse中 
                         continue
 
-                page += 1
                 ## 單頁存轉存csv append
+                #  單頁存轉存PostgreSQL(重新載入還是有可能數量出錯)
+                self.insert_jobs_into_postgres(page_jobs)
                 self.save_state(page, total_count, in_page_count, jobs_count+len(jobs))
+                page += 1
 
             except Exception as e:
                 print(f'請求失敗: {e}')

@@ -13,7 +13,7 @@ class Source104(BaseSource):
       url = base_url+f'/jobs/search/?ro=1&kwop=7&keyword={keyword}&mode=s&jobsource=2018indexpoc&page={page}'
       return base_url,url
 
-  def parse_source_job(self, base_url, soup=None, job=None):
+  def parse_source_job(self, base_url, keyword,soup=None, job=None):
       if soup:
           job_list = soup.find_all('article', class_='b-block--top-bord job-list-item b-clearfix js-job-item')
           total_count = int(soup.find('meta', attrs={'name': 'description'})['content'].split('－')[1].split()[0])
@@ -59,6 +59,7 @@ class Source104(BaseSource):
                 update_date=update,
                 record_time=datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
                 source="104",
+                keywords=keyword,
                 url=job_link,
                 requirements=job_info,
                 additional_conditions=job_condition
