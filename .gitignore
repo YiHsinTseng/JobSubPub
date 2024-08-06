@@ -1,0 +1,7 @@
+/data
+/jd-spider
+/scraper_service/processor
+/scraper_service/scraper
+/poc
+__pycache__/
+*.pyc
