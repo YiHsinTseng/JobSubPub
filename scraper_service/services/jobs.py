@@ -9,19 +9,26 @@ import csv
 class JobService:
     def __init__(self, source):
         self.source = source
-        self.state_file = "./save.json"
+        self.state_file = f"./save_{source.__class__.__name__}.json"
         self.csv_file = "./data/jobs1111_20240807_node.csv"
+        self.current_date_string = datetime.now().strftime("%Y%m%d")  # 当前日期字符串
+
 
     def load_state(self):
         try:
             with open(self.state_file, 'r') as f:
                 state = json.load(f)
-                return state
+                file_date = state.get('date', None)
+                if file_date == self.current_date_string:
+                    return state
+                else:
+                    # 如果日期不匹配，则返回初始状态
+                    return {'date': self.current_date_string, 'page': 1, 'in_page_count': 0, 'jobs_count': 0}
         except FileNotFoundError:
-            return {'page': 1, 'in_page_count': 0,'jobs_count':0}
+            return {'date': self.current_date_string,'page': 1, 'in_page_count': 0,'jobs_count':0}
 
-    def save_state(self, page, total_count, in_page_count,jobs_count):
-        state = {'page': page, 'total_count': total_count, 'in_page_count': in_page_count,'jobs_count':jobs_count}
+    def save_state(self, page, total_count, in_page_count, jobs_count):
+        state = {'date': self.current_date_string, 'page': page, 'total_count': total_count, 'in_page_count': in_page_count, 'jobs_count': jobs_count}
         with open(self.state_file, 'w') as f:
             json.dump(state, f)
 
