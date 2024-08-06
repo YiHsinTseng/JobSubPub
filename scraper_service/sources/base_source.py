@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 class BaseSource(ABC):
     @abstractmethod
-    def soruce_url(self, keyword, page):
+    def source_url(self, keyword, page):
         pass
 
     @abstractmethod

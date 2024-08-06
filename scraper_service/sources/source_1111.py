@@ -6,7 +6,7 @@ from .base_source import BaseSource
 from models.jobs import JobModel
 
 class Source1111(BaseSource):
-    def soruce_url(self, keyword, page):
+    def source_url(self, keyword, page):
         base_url = 'https://www.1111.com.tw'
         url = base_url + f'/search/job?ks={keyword}&page={page}'
         return base_url, url

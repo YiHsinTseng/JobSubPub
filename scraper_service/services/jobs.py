@@ -3,80 +3,90 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import pandas as pd
-from models.jobs import JobModel
+import json
+import csv
 
 class JobService:
     def __init__(self, source):
         self.source = source
+        self.state_file = "./save.json"
+        self.csv_file = "./data/jobs1111_20240807_node.csv"
+
+    def load_state(self):
+        try:
+            with open(self.state_file, 'r') as f:
+                state = json.load(f)
+                return state
+        except FileNotFoundError:
+            return {'page': 1, 'in_page_count': 0,'jobs_count':0}
+
+    def save_state(self, page, total_count, in_page_count,jobs_count):
+        state = {'page': page, 'total_count': total_count, 'in_page_count': in_page_count,'jobs_count':jobs_count}
+        with open(self.state_file, 'w') as f:
+            json.dump(state, f)
+
+    # def save_to_csv(self, jobs, append=False):
+    #     mode = 'a' if append else 'w'
+    #     header = not append
+
+    #     with open(self.csv_file, mode, newline='', encoding='utf-8') as file:
+    #         writer = csv.DictWriter(file, fieldnames=['job_title', 'company', 'location', 'salary', 'description', 'url'])  # Adjust fieldnames as needed
+    #         if header:
+    #             writer.writeheader()
+    #         writer.writerows(jobs)
 
     def search_jobs(self, keyword):
         jobs = []
+        state = self.load_state()
         total_count = 0
         jump = 0
         skip = []
-        page = 1
+        # page = 1
+        page = state['page']
+        in_page_count = state['in_page_count']
+        jobs_count = state['jobs_count']
         start_time = time.time()
 
         while True:
-            base_url, url = self.source.soruce_url(keyword, page)
+            base_url, url = self.source.source_url(keyword, page)
             try:
                 html_content = requests.get(url).text
                 soup = BeautifulSoup(html_content, 'html.parser')
 
                 joblist_dict = self.source.parse_source_job(base_url, soup=soup)
                 job_list = joblist_dict["job_list"]
-
-                ##分析爬蟲時間
                 total_count = joblist_dict["total_count"]
-                remaining_count = total_count - len(jobs) - jump
-                print (f'total_count: {total_count}, len(jobs): {len(jobs)}, remaining_count: {remaining_count}')
 
+                remaining_count = total_count - jobs_count -len(jobs) - jump
                 if remaining_count <= 0:
                     break
 
-                for job in job_list:
+                for job in job_list: ##恢復到上次的地方很麻煩，目前先以頁為主，重複沒關係，本來就應該以頁為單位存，但內存無法記憶
                     try:
-                        # job_dict = self.source.parse_source_job(base_url, job=job)
-                        # jobs.append({
-                        #     '職缺名稱': job_dict['職缺名稱'],
-                        #     '公司名稱': job_dict['公司名稱'],
-                        #     "產業": job_dict["產業"],
-                        #     "年資": job_dict["年資"],
-                        #     '職缺描述': job_dict["職缺描述"],
-                        #     "工作要求": job_dict["工作要求"],
-                        #     "附加條件": job_dict["附加條件"],
-                        #     '薪資': job_dict["薪資"],
-                        #     "應徵人數": job_dict["應徵人數"],
-                        #     "地區": job_dict["地區"],
-                        #     "更新日期": job_dict["更新日期"],
-                        #     "紀錄時間": job_dict["紀錄時間"],
-                        #     "來源": job_dict["來源"],
-                        #     "職缺網址": job_dict["職缺網址"]
-                        # })
                         job_instance = self.source.parse_source_job(base_url, job=job)
-                        jobs.append(job_instance.to_dict())
-                    except Exception as e:##有錯就會直接跳過
+                        jobs.append(job_instance.to_dict()) ##全局存
+                        ## 單頁存
+                        in_page_count += 1
+                    except Exception as e:
                         print(f'解析職缺資訊失敗: {e}')
                         jump += 1
-                        # skip.append(job_dict["職缺網址"])
+                        ## skip 此處不會知道具體網址，只會知道是第幾頁的第幾個，錯誤發生在parse中 
                         continue
 
                 page += 1
+                ## 單頁存轉存csv append
+                self.save_state(page, total_count, in_page_count, jobs_count+len(jobs))
 
             except Exception as e:
                 print(f'請求失敗: {e}')
-                total_count = 0
                 continue
 
-        ##分析爬蟲時間
-        remaining_count = total_count - len(jobs) - jump
-        print(f'已獲取職缺數量：{len(jobs)}, 剩餘需要處理的數量：{remaining_count},跳過處理數量:{jump}')     
+            remaining_count = total_count - jobs_count -len(jobs) - jump
+            print(f'已獲取職缺數量：{jobs_count+len(jobs)}, 剩餘需要處理的數量：{remaining_count}, 跳過處理數量:{jump}')     
+
         end_time = time.time()
         elapsed_time = end_time - start_time
         print(f'搜尋耗時: {elapsed_time:.2f} 秒')
 
-        # df = pd.DataFrame(jobs)
-        # current_date_time = datetime.now()
-        # date_string = current_date_time.strftime("%Y%m%d")
-        # df.to_csv(f'data/jobs_{date_string}.csv', header=True, index=False)
-        return total_count, jobs, skip
+        return total_count, jobs
+
