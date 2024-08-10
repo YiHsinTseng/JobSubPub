@@ -5,13 +5,13 @@ import time
 import pandas as pd
 import json
 # import csv
-from .pgHandler import PostgresHandler
+from .pgUpdateHandler import PostgresHandler
 
 class JobService:
     def __init__(self, source):
         self.source = source
         self.state_file = f"./save_{source.__class__.__name__}.json"
-        self.csv_file = "./data/jobs1111_20240807_node.csv"
+        # self.csv_file = "./data/jobs1111_20240807_node.csv"
         self.current_date_string = datetime.now().strftime("%Y%m%d")  # 当前日期字符串
         self.postgres_handler = PostgresHandler()  # 確保實例化 PostgresHandler
 
