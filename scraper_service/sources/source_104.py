@@ -28,12 +28,16 @@ class Source104(BaseSource):
           industry = job["data-indcat-desc"] 
           job_desc = job.find('p', class_='job-list-item__info').text.strip()  # 工作描述，要完整就要換地方爬
           job_salary = job.find('span', class_='b-tag--default')
-          people = job.find("a", class_="b-link--gray gtm-list-apply").text[:-2]
+          people = job.find("a", class_="b-link--gray gtm-list-apply").text[:-2].rstrip('人').strip()
           job_exp= job.find("ul",class_="b-list-inline b-clearfix job-list-intro b-content").find_all("li")[1].text
           place= job.find("ul",class_="b-list-inline b-clearfix job-list-intro b-content").find("li").text
           #update = job.find("span",class_="b-tit__date").text
-          update =datetime.strptime(job.find("span",class_="b-tit__date").text.strip(), "%m/%d").replace(year=datetime.now().year).strftime("%Y-%m-%d")
-
+          ##因為104顯示只顯示更新日期
+          update_parsed =datetime.strptime(job.find("span",class_="b-tit__date").text.strip(), "%m/%d").replace(year=datetime.now().year)
+          if update_parsed > datetime.now():
+              update= update_parsed.replace(year=datetime.now().year - 1)
+          else:
+              update=update_parsed
           if job_salary  is not None:
               # 取得元素的文字內容
               job_salary  = job_salary.text
