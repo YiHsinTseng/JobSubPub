@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "jd-analysis"
+name = "scraper_service"
 version = "0.1.0"
 description = ""
 authors = ["easontseng <yhsints.dev.gmail.com>"]
@@ -7,13 +7,14 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pandas = "^2.2.1"
 requests = "^2.31.0"
 bs4 = "^0.0.2"
 datetime = "^5.5"
 psycopg2 = "^2.9.9"
 psycopg2-binary = "^2.9.9"
 schedule = "^1.2.2"
+python-dotenv = "^1.0.1"
+pandas = "^2.2.2"
 
 
 [tool.poetry.group.dev.dependencies]

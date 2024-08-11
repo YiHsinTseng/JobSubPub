@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: jobs
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U test -d jobs" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  python:
+    build:
+      context: ../
+      dockerfile: Docker/Dockerfile.python
+    ##取代資料夾內的.env
+    env_file:
+      - ./.env
+    ##保存container中的紀錄
+    volumes:
+      - ../publish_service/data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      node:
+        condition: service_started
+
+  node:
+    build:
+      context: ../
+      dockerfile: Docker/Dockerfile.node
+    env_file:
+      - ./.env
+    working_dir: /app
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+# volumes:
+#   postgres_data:

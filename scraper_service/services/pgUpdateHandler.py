@@ -1,18 +1,30 @@
+import os
 import psycopg2
 import json
+from dotenv import load_dotenv ##poetry add python-dotenv
+
+# 加載 .env 文件中的環境變量
+load_dotenv()
 
 class PostgresHandler:
     def __init__(self):
         # PostgreSQL 連接設置
+        # self.conn = psycopg2.connect(
+        #     host="localhost",
+        #     database="jobs",
+        #     user="test",
+        #     password="test"
+        # )
         self.conn = psycopg2.connect(
-            host="localhost",
-            database="jobs",
-            user="test",
-            password="test"
+            host=os.getenv("DB_HOST"),
+            database=os.getenv("DB_NAME"),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD")
         )
         self.cur = self.conn.cursor()
         #  創建表格（如果不存在）
         self.create_table()
+        self.create_subscription_table()
     def create_table(self):
         create_table_query = """
         CREATE TABLE IF NOT EXISTS jobs (
@@ -42,6 +54,26 @@ class PostgresHandler:
         except Exception as e:
             print(f'創建表格時出錯: {e}')
             self.conn.rollback()
+   
+    def create_subscription_table(self):
+        schema = """
+        CREATE TABLE IF NOT EXISTS job_subscriptions (
+            id SERIAL PRIMARY KEY,             -- 自增主键
+            customer_id UUID NOT NULL UNIQUE,  -- 顾客 ID，使用 UUID 格式，并要求唯一
+            industries JSONB NOT NULL,         -- 行业栏位，使用 JSONB 格式
+            job_info JSONB NOT NULL,           -- 关键字栏位，使用 JSONB 格式
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- 创建时间，默认为当前时间
+        );
+        """
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(schema)
+                self.conn.commit()
+            print("表格 'job_subscriptions' 已成功创建或已存在。")
+        except Exception as e:
+            print(f'创建表格时出错: {e}')
+            self.conn.rollback()
+
     def insert_jobs_into_postgres(self, jobs):
         try:
             with self.conn.cursor() as cur:

@@ -1,7 +1,12 @@
+.env
+.venv
+node_modules
 /data
-/jd-spider
+/Docker/postgres_data
 /scraper_service/processor
 /scraper_service/scraper
+/scraper_service/data/*
+/publish_service/data/*
 /poc
 __pycache__/
 *.pyc
