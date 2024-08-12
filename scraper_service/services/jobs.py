@@ -2,7 +2,7 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 import time
-import pandas as pd
+# import pandas as pd
 import json
 # import csv
 from .pgUpdateHandler import PostgresHandler
@@ -10,7 +10,7 @@ from .pgUpdateHandler import PostgresHandler
 class JobService:
     def __init__(self, source):
         self.source = source
-        self.state_file = f"./save_{source.__class__.__name__}.json"
+        self.state_file = f"./data/save_{source.__class__.__name__}.json"
         # self.csv_file = "./data/jobs1111_20240807_node.csv"
         self.current_date_string = datetime.now().strftime("%Y%m%d")  # 当前日期字符串
         self.postgres_handler = PostgresHandler()  # 確保實例化 PostgresHandler

@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  mosquitto:
+    build:
+      context: .
+      dockerfile: Dockerfile.mq
+    container_name: mosquitto
+    #沒有創建mosquitto.db就無法離線
+    volumes:
+      - ./mosquitto/data:/mosquitto/data
+    #1883在容器內已被佔用(可能是socket)
+    ports:
+      - "1884:1884"
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z localhost 1884 || exit 1" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
   postgres:
     image: postgres:latest
     environment:
@@ -28,7 +46,8 @@ services:
       - ./.env
     ##保存container中的紀錄
     volumes:
-      - ../publish_service/data:/app/data
+      - ./scraper_service/data:/app/data
+    container_name: scraper_service
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,9 +63,12 @@ services:
     working_dir: /app
     ports:
       - "4000:4000"
+    container_name: publish_service
     depends_on:
       postgres:
         condition: service_healthy
+      mosquitto:
+        condition: service_started
 
 # volumes:
 #   postgres_data:

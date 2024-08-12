@@ -1,0 +1,11 @@
+# 使用官方的 Mosquitto image作為基礎
+FROM eclipse-mosquitto:latest
+
+# 複製本地配置文件到容器中（可選）
+COPY ./mosquitto/mosquitto.conf /mosquitto/config/mosquitto.conf
+
+# 暴露 Mosquitto 默認的端口
+EXPOSE 1883
+
+# 設定容器啟動時執行的命令
+CMD ["mosquitto", "-c", "/mosquitto/config/mosquitto.conf"]

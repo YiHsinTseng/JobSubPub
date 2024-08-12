@@ -24,3 +24,27 @@ CREATE TABLE IF NOT EXISTS job_subscriptions (
     job_info JSONB NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+INSERT INTO job_subscriptions (customer_id, industries, job_info, created_at)
+VALUES (
+    '0ce32985-7fda-4c20-ad62-3ac0a9b23231',
+    '[
+        "消費性電子產品製造業",
+        "電腦軟體服務業",
+        "人力仲介代徵",
+        "其他電子零組件相關業",
+        "多媒體相關業",
+        "廣告行銷公關業"
+      ]
+    '::jsonb, -- 假設行業
+    '[
+        "Java",
+        "VueJS",
+        "HTML",
+        "jQuery",
+        "Node.js"
+      ]'::jsonb, -- 假設職位信息
+    NOW() -- 當前時間
+);
+
+SELECT * FROM job_subscriptions;
