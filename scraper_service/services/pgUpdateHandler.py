@@ -25,30 +25,14 @@ class PostgresHandler:
         #  創建表格（如果不存在）
         self.create_table()
         self.create_subscription_table()
+        self.create_id_subscription_table()
+        self.create_trigger_and_log()
     def create_table(self):
-        create_table_query = """
-        CREATE TABLE IF NOT EXISTS jobs (
-            job_id SERIAL PRIMARY KEY,
-            job_title character varying(255),
-            company_name character varying(255),
-            industry character varying(255),
-            job_exp character varying(50),
-            job_desc TEXT,
-            job_info JSONB,
-            job_condition TEXT,
-            job_salary character varying(255),
-            people character varying(50),
-            place character varying(255),
-            update_date DATE,
-            record_time TIMESTAMP,
-            source character varying(50),
-            keywords character varying(255),
-            job_link character varying(1024) UNIQUE
-        );
-        """
-        try:
+        with open("../postgres_db/create_jobs.sql", 'r', encoding='utf-8') as file:
+            create_jobs_sql = file.read()
+        try:   
             with self.conn.cursor() as cur:
-                cur.execute(create_table_query)
+                cur.execute(create_jobs_sql)
                 self.conn.commit()
             print("表格 'jobs' 已成功創建或已存在。")
         except Exception as e:
@@ -56,68 +40,66 @@ class PostgresHandler:
             self.conn.rollback()
    
     def create_subscription_table(self):
-        schema = """
-        CREATE TABLE IF NOT EXISTS job_subscriptions (
-            id SERIAL PRIMARY KEY,             -- 自增主键
-            customer_id UUID NOT NULL UNIQUE,  -- 顾客 ID，使用 UUID 格式，并要求唯一
-            industries JSONB NOT NULL,         -- 行业栏位，使用 JSONB 格式
-            job_info JSONB NOT NULL,           -- 关键字栏位，使用 JSONB 格式
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- 创建时间，默认为当前时间
-        );
-        """
+        with open("../postgres_db/create_jobs.sql", 'r', encoding='utf-8') as file:
+            create_job_subs_sql = file.read()
         try:
             with self.conn.cursor() as cur:
-                cur.execute(schema)
+                cur.execute(create_job_subs_sql)
                 self.conn.commit()
-            print("表格 'job_subscriptions' 已成功创建或已存在。")
+            print("表格 'job_subscriptions' 已成功創建或已存在。")
         except Exception as e:
-            print(f'创建表格时出错: {e}')
+            print(f'創建表格時出錯: {e}')
             self.conn.rollback()
-
+    def create_id_subscription_table(self):
+            with open("../postgres_db/create_id_subs.sql", 'r', encoding='utf-8') as file:
+                create_id_subs_sql = file.read()
+            try:
+                with self.conn.cursor() as cur:
+                    cur.execute(create_id_subs_sql)
+                    self.conn.commit()
+                print("表格 'job_id_subscriptions' 已成功創建或已存在。")
+            except Exception as e:
+                print(f'創建表格時出錯: {e}')
+                self.conn.rollback()
+    def create_channel_table(self):
+        with open("../postgres_db/create_act_pub_channel.sql", 'r', encoding='utf-8') as file:
+            create_act_pub_channel_sql = file.read()
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(create_act_pub_channel_sql)
+                self.conn.commit()
+            print("表格 'job_id_subscriptions' 已成功創建或已存在。")
+        except Exception as e:
+            print(f'創建表格時出錯: {e}')
+            self.conn.rollback()
+    def create_trigger_and_log(self):
+            with open("../postgres_db/create_trigger_log.sql", 'r', encoding='utf-8') as file:
+                create_trigger_log_sql = file.read()   
+            with open("../postgres_db/create_act_pub_trigger.sql", 'r', encoding='utf-8') as file:
+                create_trigger_sql = file.read()
+            try:
+                with self.conn.cursor() as cur:
+                    cur.execute(create_trigger_log_sql)
+                    self.conn.commit()
+                print("表格 'trigger_log' 已成功創建或已存在。")
+                with self.conn.cursor() as cur:
+                    cur.execute(create_trigger_sql)
+                    self.conn.commit()
+                print("表格 'act_pub_trigger' 已成功創建或已存在。")
+            except Exception as e:
+                print(f'創建表格時出錯: {e}')
+                self.conn.rollback()
     def insert_jobs_into_postgres(self, jobs):
         try:
+            with open("../postgres_db/insert_jobs.sql", 'r', encoding='utf-8') as file:
+                insert_jobs_sql = file.read()
             with self.conn.cursor() as cur:
                 ##基本上jobs內的dict在前面即符合JobModel(可以考慮驗證驗證) 
                 for job in jobs:
                     ##其實JobModel應該要跟PG欄位名稱一樣，這裡並沒有做到
-                    ##如果欄位衝突的話要怎樣解決，目前是後面直接取代前面
-                    cur.execute("""
-                        INSERT INTO jobs (
-                            job_title, 
-                            company_name, 
-                            industry, 
-                            job_exp, 
-                            job_desc, 
-                            job_info, 
-                            job_condition, 
-                            job_salary, 
-                            people, 
-                            place, 
-                            update_date, 
-                            record_time, 
-                            source, 
-                            keywords, 
-                            job_link
-                        ) VALUES (
-                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-                        )
-                        ON CONFLICT (job_link) DO UPDATE
-                        SET
-                            job_title = EXCLUDED.job_title,
-                            company_name = EXCLUDED.company_name,
-                            industry = EXCLUDED.industry,
-                            job_exp = EXCLUDED.job_exp,
-                            job_desc = EXCLUDED.job_desc,
-                            job_info = EXCLUDED.job_info,
-                            job_condition = EXCLUDED.job_condition,
-                            job_salary = EXCLUDED.job_salary,
-                            people = EXCLUDED.people,
-                            place = EXCLUDED.place,
-                            update_date = EXCLUDED.update_date,
-                            record_time = EXCLUDED.record_time,
-                            source = EXCLUDED.source,
-                            keywords = EXCLUDED.keywords
-                    """, (
+                    ##如果欄位衝突的話要怎樣解決，目前是後面直接取代前面    
+                    cur.execute(
+                    insert_jobs_sql, (
                         job['title'],  
                         job['company_name'],  
                         job['industry'],  

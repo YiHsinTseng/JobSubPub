@@ -3,10 +3,13 @@
 node_modules
 /data
 /Docker/postgres_data
+/Docker/mosquitto/data/mosquitto.db
+/Docker/scraper_service/data/
 /scraper_service/processor
 /scraper_service/scraper
 /scraper_service/data/*
 /publish_service/data/*
 /poc
+/postgres_db/poc
 __pycache__/
 *.pyc
