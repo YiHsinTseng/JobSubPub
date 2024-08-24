@@ -15,6 +15,7 @@ psycopg2-binary = "^2.9.9"
 schedule = "^1.2.2"
 python-dotenv = "^1.0.1"
 pandas = "^2.2.2"
+flask = "^3.0.3"
 
 
 [tool.poetry.group.dev.dependencies]
