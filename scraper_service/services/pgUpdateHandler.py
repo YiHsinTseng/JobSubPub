@@ -26,6 +26,7 @@ class PostgresHandler:
         self.create_table()
         self.create_subscription_table()
         self.create_id_subscription_table()
+        self.create_channel_table()
         self.create_trigger_and_log()
     def create_table(self):
         with open("../postgres_db/create_jobs.sql", 'r', encoding='utf-8') as file:

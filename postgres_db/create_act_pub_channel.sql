@@ -13,4 +13,4 @@ CREATE TABLE IF NOT EXISTS company_name_channel (
 -- Drop TABLE company_name_channel
 
 -- select * from job_id_channel;
-select * from company_name_channel;
+-- select * from company_name_channel;

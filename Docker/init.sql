@@ -19,13 +19,13 @@ CREATE TABLE IF NOT EXISTS jobs (
 
 CREATE TABLE IF NOT EXISTS job_subscriptions (
     id SERIAL PRIMARY KEY,
-    customer_id UUID NOT NULL UNIQUE,
+    user_id UUID NOT NULL UNIQUE,
     industries JSONB NOT NULL,
     job_info JSONB NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO job_subscriptions (customer_id, industries, job_info, created_at)
+INSERT INTO job_subscriptions (user_id, industries, job_info, created_at)
 VALUES (
     '0ce32985-7fda-4c20-ad62-3ac0a9b23231',
     '[

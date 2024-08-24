@@ -63,7 +63,7 @@ BEGIN
         VALUES ('job_update_notification', json_build_object(
             'job_title', NEW.job_title,
             'job_id', NEW.job_id,
-            'changed_fields', changed_fields
+            'changed_fields', changed_fields,
 			'data', row_to_json(NEW)
         ));
     END IF;
