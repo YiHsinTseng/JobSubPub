@@ -5,7 +5,7 @@
   "scripts": {
     "test": "jest",
     "prestart": "cp -r ../commons/* .",
-    "start:node": "node server.js",
+    "start:node": "nodemon server.js",
     "dev": "npm run prestart && npm run start:node"
 
   },

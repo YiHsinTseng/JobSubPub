@@ -4,6 +4,7 @@ const cron = require('node-cron');
 const { publishMessage } = require('../configs/mqttClient');
 const { pool } = require('../configs/dbConfig');
 const { condGen } = require('../utils/jobCondGen');
+const { getDate } = require('../utils/dateUtils');
 
 // const { getSubscriptionConditions } = require('./subs'); //耦合
 
@@ -39,6 +40,7 @@ const filterJobs = async (conditions) => {
       const { user_id } = cond;
       const { industries, job_info } = cond;
       const conditionsArray = condGen(cond);
+      console.log(`(${conditionsArray.join(' AND ')})`);
       return {
         user_id,
         conditionString: `(${conditionsArray.join(' AND ')})`,
@@ -67,8 +69,11 @@ const filterJobs = async (conditions) => {
       `;
       const result = await pool.query(query);
       // return { user_id, count: result.rows[0].count, sub };
+      const options = {
+        timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
+      };
       return {
-        user_id, count: result.rows[0].total_count, update: result.rows[0].today_count, sub,
+        user_id, count: result.rows[0].total_count, update: result.rows[0].today_count, sub, queryDate: getDate(),
       };
     }));
 
@@ -90,12 +95,14 @@ async function processPush(conditions) {
   try {
     const jobResults = await filterJobs(conditions);
     jobResults.forEach(({
-      user_id, count, update, sub,
+      user_id, count, update, sub, queryDate,
     }) => {
       const message = JSON.stringify({
         authToken: generateToken(user_id),
         user_id,
-        data: { count, update, sub },
+        data: {
+          count, update, sub, queryDate,
+        },
       });
       publishMessage(MQTT_TOPIC, message);
     });

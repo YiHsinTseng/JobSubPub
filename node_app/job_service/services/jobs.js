@@ -95,15 +95,14 @@ const filterJobs = async (conditions) => {
 };
 
 // 回傳分頁值(沒有userid)
-const getJobs = async (condition, count, limit = 50, offset = 0) => {
+const getJobs = async (condition, count,date, limit = 50, offset = 0) => {
   // console.log(condition, count);
   try {
   // 確保 conditions 是一個對象
     if (typeof condition !== 'object' || condition === null) {
       throw new Error('Invalid conditions format');
     }
-    const conditionsArray = condGen({ condition }); // 假裝是批量
-    // console.log(conditionsArray);
+    const conditionsArray = condGen(condition);
 
     // 構建最終條件字符串
     const conditionString = conditionsArray.length > 0 ? `(${conditionsArray.join(' AND ')})` : 'TRUE'; // Default to TRUE if no conditions
@@ -113,14 +112,14 @@ const getJobs = async (condition, count, limit = 50, offset = 0) => {
     SELECT *
     FROM jobs
     WHERE ${conditionString}
+    AND DATE(update_date) = $3
     ORDER BY update_date DESC
     LIMIT $1 OFFSET $2
   `;
-    const result = await pool.query(query, [limit, offset]);
-
+    const result = await pool.query(query, [limit, offset,date]);
     // return result;
     // 推算總頁數
-    const totalItems = count; // 假設 req.count 中帶有總數
+    const totalItems = count; // 假設 req.count 中帶有總數(應該用jwt判斷)
     const totalPages = Math.ceil(totalItems / limit);
     const currentPage = Math.floor(offset / limit) + 1;
 
