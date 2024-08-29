@@ -5,7 +5,8 @@ FROM node:latest
 WORKDIR /app
 
 # 複製 Node.js 應用程式代碼
-COPY publish_service /app 
+COPY node_app/publish_service /app
+COPY node_app/commons /app 
 
 # 刪除不需要的檔案或目錄(以免報錯)
 RUN rm -rf /app/node_modules/

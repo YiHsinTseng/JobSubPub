@@ -1,0 +1,43 @@
+global:
+  scrape_interval: 15s  # 抓取間隔，默認為15秒
+  evaluation_interval: 15s  # 規則評估間隔，默認為15秒
+
+  # 抓取的超時時間
+  scrape_timeout: 10s
+
+  # 外部標籤將添加到所有的時間序列中
+  external_labels:
+    monitor: 'codelab-monitor'
+
+# 警報規則的文件位置
+# rule_files:
+#   - "alert.rules.yml"
+
+# 抓取配置
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['prometheus:9090']
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['node_exporter:9100']
+
+  - job_name: 'postgres_exporter'
+    static_configs:
+      - targets: ['postgres_exporter:9187']
+
+  - job_name: 'scraper_service'
+    static_configs:
+      - targets: ['scraper_service:8001']
+
+  - job_name: 'job_service'
+    static_configs:
+      - targets: ['job_service:4000']
+
+  - job_name: 'publish_service'
+    static_configs:
+      - targets: ['publish_service:4010']
+
+ 

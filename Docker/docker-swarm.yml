@@ -2,10 +2,10 @@ version: '3.8'
 
 services:
   mosquitto:
-    build:
-      context: .
-      dockerfile: Dockerfile.mq
-    container_name: mosquitto
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.mq
+    image: yhsintseng/docker_mosquitto:latest
     #沒有創建mosquitto.db就無法離線
     volumes:
       - ./mosquitto/data:/mosquitto/data
@@ -38,9 +38,10 @@ services:
       timeout: 10s
 
   scraper_service:
-    build:
-      context: ../
-      dockerfile: Docker/Dockerfile.python
+    # build:
+    #   context: ../
+    #   dockerfile: Docker/Dockerfile.python
+    image: yhsintseng/docker_python:latest
     ##取代資料夾內的.env
     env_file:
       - ./.env
@@ -51,91 +52,67 @@ services:
     volumes:
       - ./scraper_service/data:/app/scraper_service/data
       - ../postgres_db:/app/postgres_db
-    container_name: scraper_service
-    depends_on:
-      postgres:
-        condition: service_healthy
-      publish_service:
-        condition: service_started
 
   job_service:
-    build:
-      context: ../
-      dockerfile: Docker/Dockerfile.nodejs_job
+    image: yhsintseng/docker_job_service:latest
+    # build:
+    #   context: ../
+    #   dockerfile: Docker/Dockerfile.nodejs_job
     env_file:
       - ./.env
     working_dir: /app
     ports:
       - "4000:4000"
-    container_name: job_service
-    depends_on:
-      postgres:
-        condition: service_healthy
-      mosquitto:
-        condition: service_started
+    # container_name: job_service
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 2
+        delay: 10s
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "512M"
 
   publish_service:
-    build:
-      context: ../
-      dockerfile: Docker/Dockerfile.nodejs_pub
+    # build:
+    #   context: ../
+    #   dockerfile: Docker/Dockerfile.nodejs_pub
+    image: yhsintseng/docker_publish_service:latest
     env_file:
       - ./.env
     working_dir: /app
     ports:
       - "4010:4010"
-    container_name: publish_service
-    depends_on:
-      postgres:
-        condition: service_healthy
-      mosquitto:
-        condition: service_started
 
   node_exporter:
     image: prom/node-exporter:latest
-    container_name: node_exporter
     ports:
       - "9100:9100"
-    restart: unless-stopped
-    depends_on:
-      - publish_service
-      - job_service
-      - prometheus
 
   postgres_exporter:
     image: quay.io/prometheuscommunity/postgres-exporter
-    restart: always
-    container_name: postgres_exporter
     environment:
       DATA_SOURCE_NAME: "postgresql://test:test@postgres:5432/jobs?sslmode=disable"
     ports:
       - "9187:9187"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      prometheus:
-        condition: service_started
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
       - ./monitor/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./monitor/data/prometheus:/prometheus
-    restart: unless-stopped
 
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana
     ports:
       - "4050:4050"
-    restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_PASSWORD: 'admin'
     volumes:
       - ./monitor/data/grafana:/var/lib/grafana
       - "./monitor/config/grafana.ini:/etc/grafana/grafana.ini"
-    depends_on:
-      prometheus:
-        condition: service_started
