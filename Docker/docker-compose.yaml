@@ -115,6 +115,14 @@ services:
       prometheus:
         condition: service_started
 
+  mosquitto_exporter:
+    image: sapcc/mosquitto-exporter
+    ports:
+      - "9234:9234"
+    environment:
+      - "BROKER_ENDPOINT=tcp://mosquitto:1884"
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus

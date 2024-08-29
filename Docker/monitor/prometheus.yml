@@ -18,6 +18,10 @@ scrape_configs:
     static_configs:
       - targets: ['postgres_exporter:9187']
 
+  - job_name: 'mosquitto_exporter'
+    static_configs:
+      - targets: ['mosquitto_exporter:9234']
+
   - job_name: 'scraper_service'
     static_configs:
       - targets: ['scraper_service:8001']
