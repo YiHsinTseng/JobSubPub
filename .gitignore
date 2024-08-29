@@ -2,9 +2,12 @@
 .venv
 node_modules
 /data
+/Docker/monitor/data/prometheus
 /Docker/postgres_data
 /Docker/mosquitto/data/mosquitto.db
 /Docker/scraper_service/data/
+/Docker/nginx
+/Docker/docker-compose-nginx.yaml
 /scraper_service/processor
 /scraper_service/scraper
 /scraper_service/data/*
@@ -13,3 +16,4 @@ node_modules
 /postgres_db/poc
 __pycache__/
 *.pyc
+/uml

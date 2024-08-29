@@ -1,0 +1,70 @@
+require('dotenv').config();
+const { publishMessage } = require('../configs/mqttClient');
+const { pool: pgClient } = require('../configs/dbConfig');
+
+const { MQTT_JOB, MQTT_COMPANY } = process.env;
+
+pgClient.connect()
+  .then(() => {
+    pgClient.query(`LISTEN ${MQTT_JOB}`);
+    pgClient.query(`LISTEN ${MQTT_COMPANY}`);
+    console.log(`PostgreSQL listening to ${MQTT_JOB} and ${MQTT_COMPANY}`);
+  })
+  .catch((err) => console.error('PostgreSQL connection error', err.stack));
+
+pgClient.on('notification', async (msg) => {
+  const { channel, payload } = msg;
+  let parsedPayload;
+  try {
+    parsedPayload = JSON.parse(payload);
+  } catch (error) {
+    console.error('Error parsing payload:', error);
+    return;
+  }
+
+  const channelsConfig = {
+    [MQTT_JOB]: {
+      tableName: MQTT_JOB,
+      queryField: 'job_id',
+      queryValue: parsedPayload.job_id,
+      mqttTopic: MQTT_JOB,
+    },
+    [MQTT_COMPANY]: {
+      tableName: MQTT_COMPANY,
+      queryField: 'company_name',
+      queryValue: parsedPayload.company_name,
+      mqttTopic: MQTT_COMPANY,
+    },
+  };
+
+  const config = channelsConfig[channel];
+  if (!config) {
+    console.warn('Unknown channel:', channel);
+    return;
+  }
+
+  const {
+    tableName, queryField, queryValue, mqttTopic,
+  } = config;
+  const userIdsQuery = `
+    SELECT user_ids
+    FROM ${tableName}
+    WHERE ${queryField} = $1
+  `;
+
+  try {
+    const res = await pgClient.query(userIdsQuery, [queryValue]);
+    if (res.rows.length === 0) {
+      console.log(`No users found for ${queryField} ${queryValue}`);
+      return;
+    }
+
+    const userIds = res.rows[0].user_ids;
+    const messages = userIds.map((userId) => JSON.stringify({ user_id: userId, data: parsedPayload }));
+    messages.forEach((message) => {
+      publishMessage(mqttTopic, message);
+    });
+  } catch (error) {
+    console.error('Error querying or publishing messages:', error);
+  }
+});
