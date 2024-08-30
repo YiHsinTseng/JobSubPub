@@ -4,10 +4,10 @@
   "description": "",
   "scripts": {
     "test": "jest",
-    "prestart": "cp -r ../commons/* .",
+    "prestart": "cp -r ../commons/* . && find ../commons/ -type f -exec echo {} \\; | sed 's|../commons/|.|' > files-to-delete.txt",
     "start:node": "nodemon server.js",
-    "dev": "npm run prestart && npm run start:node"
-
+    "dev": "npm run prestart && pnpm i && npm run start:node",
+    "poststart": "cat files-to-delete.txt | xargs -I {} rm -f {} && rm -rf node_modules && find . -type d -empty -delete && rm files-to-delete.txt"
   },
   "author": "",
   "license": "ISC",
@@ -23,6 +23,7 @@
     "express": "^4.19.2",
     "jest": "^29.7.0",
     "jsonwebtoken": "^9.0.2",
+    "luxon": "^3.5.0",
     "mqtt": "^5.9.0",
     "node-cron": "^3.0.3",
     "passport": "^0.7.0",

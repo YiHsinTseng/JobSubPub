@@ -4,9 +4,7 @@ const cron = require('node-cron');
 const { publishMessage } = require('../configs/mqttClient');
 const { pool } = require('../configs/dbConfig');
 const { condGen } = require('../utils/jobCondGen');
-const { getDate } = require('../utils/dateUtils');
-
-// const { getSubscriptionConditions } = require('./subs'); //耦合
+const { filterJobs } =require('./filterJobs')
 
 const { PASSPORT_SECRET, JWT_EXPIRES_IN, MQTT_TOPIC } = process.env;
 
@@ -29,57 +27,6 @@ const getSubscriptionConditions = async (offset = 0, limit = 100) => {
     }));
   } catch (error) {
     console.error('Error querying job_subscriptions table:', error);
-    return [];
-  }
-};
-
-// 批量處理查詢(有userid)
-const filterJobs = async (conditions) => {
-  try {
-    const conditionStrings = conditions.map((cond) => {
-      const { user_id } = cond;
-      const { industries, job_info } = cond;
-      const conditionsArray = condGen(cond);
-      console.log(`(${conditionsArray.join(' AND ')})`);
-      return {
-        user_id,
-        conditionString: `(${conditionsArray.join(' AND ')})`,
-        sub: { industries, job_info },
-      };
-    });
-
-    const results = await Promise.all(conditionStrings.map(async ({ user_id, conditionString, sub }) => {
-      // const query = `
-      //   SELECT Count("industry") AS count
-      //   FROM jobs
-      //   WHERE ${conditionString}
-      // `;
-      const query = `
-        WITH JobCounts AS (
-          SELECT 
-            COUNT(*) AS total_count,
-            COUNT(CASE WHEN DATE(update_date) = CURRENT_DATE THEN 1 END) AS today_count
-          FROM jobs
-          WHERE ${conditionString}
-        )
-        SELECT 
-          total_count,
-          today_count
-        FROM JobCounts
-      `;
-      const result = await pool.query(query);
-      // return { user_id, count: result.rows[0].count, sub };
-      const options = {
-        timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit',
-      };
-      return {
-        user_id, count: result.rows[0].total_count, update: result.rows[0].today_count, sub, queryDate: getDate(),
-      };
-    }));
-
-    return results;
-  } catch (error) {
-    console.error('Error querying jobs table:', error);
     return [];
   }
 };
