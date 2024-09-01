@@ -1,0 +1,34 @@
+{
+  "name": "scraper_service_js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "devDependencies": {
+    "@eslint/compat": "^1.0.3",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "prettier": "^3.3.1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.6",
+    "cheerio": "^1.0.0",
+    "csv-writer": "^1.6.0",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.4.5",
+    "fs": "0.0.1-security",
+    "fs-extra": "^11.2.0",
+    "moment": "^2.30.1",
+    "node-schedule": "^2.1.1",
+    "npm": "^10.8.3",
+    "pg": "^8.12.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
