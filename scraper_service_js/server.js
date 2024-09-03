@@ -2,6 +2,7 @@ const express = require('express');
 const { job, scheduleJob } = require('./controllers/jobs');
 const { startPrometheusServer } = require('./metrics');
 const opRoutes = require('./routes/op'); // 運行時操作
+const logger = require('./winston');
 
 const app = express();
 app.use(express.json());
@@ -11,7 +12,7 @@ app.use('/', opRoutes);
 const startApp = () => {
   const port = 5060;
   app.listen(port, () => {
-    console.log(`Express server running at http://localhost:${port}`);
+    logger.info(`Express server running at http://localhost:${port}`, { source: 'server' });
   });
 };
 

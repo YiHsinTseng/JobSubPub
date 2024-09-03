@@ -3,6 +3,7 @@ const { createObjectCsvWriter } = require('csv-writer');
 const moment = require('moment');
 
 const schedule = require('node-schedule');
+const logger = require('../winston');
 const { sourceLoader } = require('../utils/source_loader');
 const JobService = require('../services/jobs');
 const {
@@ -15,7 +16,7 @@ const searchAndSaveJobs = async (sources, keyword) => {
 
   // 多腳本切換（可以優化效率）？不需要並行？
   for (const source of sources) {
-    console.log(`正在處理數據來源: ${source.constructor.name}`);
+    logger.info(`正在處理數據來源: ${source.constructor.name}`);
     const { totalCount, jobs } = await JobService.searchJobs(source, keyword);
 
     allJobs = allJobs.concat(jobs);
@@ -30,22 +31,30 @@ const searchAndSaveJobs = async (sources, keyword) => {
   return { totalCountAllSources, allJobs };
 };
 
-const job = async () => {
-  const sources = await sourceLoader();
-  if (sources.length > 0) {
-    const keyword = 'node.js';// 透過api修改關鍵字
-    const end = JOB_DURATION.startTimer();
-    try {
-      await searchAndSaveJobs(sources, keyword);
-    } finally {
-      end(); // 計算 job 執行時間
+const job = async (next) => {
+  try {
+    const sources = await sourceLoader();
+    if (sources.length > 0) {
+      const keyword = 'node.js'; // 透過 API 修改關鍵字
+      const end = JOB_DURATION.startTimer();
+      try {
+        await searchAndSaveJobs(sources, keyword);
+      } finally {
+        end(); // 計算 job 執行時間
+      }
     }
+  } catch (err) {
+    logger.error('Error occurred:', { message: err.message, stack: err.stack });
   }
 };
 
 const scheduleJob = () => {
-  schedule.scheduleJob('0 9 * * *', job);
-  JOB_STATUS.set(1);
+  try {
+    schedule.scheduleJob('0 9 * * *', job);
+    JOB_STATUS.set(1);
+  } catch (err) {
+    logger.error('Error occurred:', { message: err.message, stack: err.stack });
+  }
 };
 
-module.exports = { searchAndSaveJobs, job, scheduleJob };
+module.exports = { job, scheduleJob };

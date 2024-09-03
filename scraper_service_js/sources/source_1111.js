@@ -1,8 +1,9 @@
 const cheerio = require('cheerio');
 const moment = require('moment');
 const { makeRequest } = require('../utils/request_utils');
-const BaseSource = require('./base_source'); 
-const JobModel = require('../models/jobs'); 
+const BaseSource = require('./base_source');
+const JobModel = require('../models/jobs');
+const logger = require('../winston');
 
 class Source1111 extends BaseSource {
   sourceUrl(keyword, page) {
@@ -35,11 +36,11 @@ class Source1111 extends BaseSource {
         .replace('-', '~');
       const updateDateStr = $('div.data').text().trim();
       let update = moment(updateDateStr, 'YYYY/MM/DD').year(moment().year()).format('YYYY-MM-DD');
-      if (!moment(update, 'YYYY-MM-DD', true).isValid()) {
-        console.log("無效日期格式");
-        update = null; //pg可接受null
+      if (!moment(update, 'YYYY-MM-DD', false).isValid()) {
+        logger.warn('無效日期格式');
+        update = null; // pg可接受null
       }
-      
+
       // 獲取更多工作細節
       const { data: htmlContent2 } = await makeRequest(jobLink);
       const $2 = cheerio.load(htmlContent2);

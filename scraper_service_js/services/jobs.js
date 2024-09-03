@@ -2,6 +2,7 @@ const fs = require('fs');
 const { format } = require('date-fns');
 const { makeRequest } = require('../utils/request_utils');
 const PostgresHandler = require('./pgUpdateHandler');
+const logger = require('../winston');
 
 const loadState = (stateFile, currentDateString) => {
   try {
@@ -61,7 +62,7 @@ const searchJobs = async (source, keyword, stateFile = `./data/save_${source.con
           pageJobs.push(jobDict);
           inPageCount += 1;
         } catch (e) {
-          console.error(`解析職缺資訊失敗: ${e}`);
+          logger.error(`解析職缺資訊失敗: ${e}`);
           failedJobsCount += 1;
           continue;
         }
@@ -73,16 +74,16 @@ const searchJobs = async (source, keyword, stateFile = `./data/save_${source.con
       page += 1;
 
       remainingCount = totalCount - jobsCount - jobs.length - failedJobsCount;
-      console.log(`已獲取職缺數量：${jobsCount}, 剩餘需要處理的數量：${remainingCount}, 跳過處理數量:${failedJobsCount}`);
+      logger.info(`已獲取職缺數量：${jobsCount}, 剩餘需要處理的數量：${remainingCount}, 跳過處理數量:${failedJobsCount}`);
     } catch (e) {
-      console.error(`請求失敗: ${e}`);
+      logger.error(`請求失敗: ${e}`);
       continue;
     }
   }
 
   const endTime = Date.now();
   const elapsedTime = (endTime - startTime) / 1000;
-  console.log(`搜尋耗時: ${elapsedTime.toFixed(2)} 秒`);
+  logger.info(`搜尋耗時: ${elapsedTime.toFixed(2)} 秒`);
 
   return { totalCount, jobs };
 };

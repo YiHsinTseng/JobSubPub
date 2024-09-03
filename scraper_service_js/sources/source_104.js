@@ -4,7 +4,7 @@ const moment = require('moment');
 const { makeRequest } = require('../utils/request_utils');
 const BaseSource = require('./base_source'); // 假設你有一個 base_source 模塊
 const JobModel = require('../models/jobs'); // 假設你有一個 jobs 模塊
-const logger = require('../winston'); // 引入 winston 配置
+const logger = require('../winston');
 
 class Source104 extends BaseSource {
   sourceUrl(keyword, page) {
@@ -51,7 +51,7 @@ class Source104 extends BaseSource {
 
       let update = jobDetails.data.header.appearDate;
       if (!moment(update, 'YYYY-MM-DD', false).isValid()) {
-        logger.warn(`無效日期格式:${jobLink}`);// 熱門職缺要深入分析html
+        logger.warn(`無效日期格式:${update},來源:${jobLink}`);// 熱門職缺要深入分析html
         update = null; // pg可接受null
       }
 

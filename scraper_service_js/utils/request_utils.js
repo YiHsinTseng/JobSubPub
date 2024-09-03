@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { promisify } = require('util');
+const logger = require('../winston');
 
 const sleep = promisify(setTimeout); // 使 setTimeout 成为返回 Promise 的函数
 
@@ -18,10 +19,10 @@ async function makeRequest(url) {
   // 但個別請求 0.001秒卻沒有觸發429
   try {
     const response = await axios.get(url, { headers });
-    console.log('Response status code:', response.status, url);
+    logger.info(`Response status code: ${response.status} ${url}`);
     return response;
   } catch (error) {
-    console.error('Request failed:', error.response ? error.response.status : error.message);
+    logger.error('Request failed:', error.response ? error.response.status : error.message);
     throw error;
   }
 }

@@ -1,6 +1,7 @@
 const express = require('express');
 const prometheus = require('prom-client');
 
+const logger = require('./winston');
 // 創建一個新的 Express 應用來處理 Prometheus 指標
 const prometheusApp = express();
 
@@ -38,7 +39,7 @@ prometheusApp.get('/metrics', async (req, res) => {
 const startPrometheusServer = () => {
   const prometheusPort = 8001;
   prometheusApp.listen(prometheusPort, () => {
-    console.log(`Prometheus metrics available at http://localhost:${prometheusPort}/metrics`);
+    logger.info(`Prometheus metrics available at http://localhost:${prometheusPort}/metrics`, { source: 'server' });
   });
 };
 
