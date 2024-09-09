@@ -49,6 +49,7 @@ JobSubPub旨在自動化地從職缺網站爬取職缺資料，並根據使用�
 
 - **外部服務與通知模組**  
   - 外部服務透過RESTful API與應用伺服器互動，並使用Socket.IO即時向使用者推送通知，實現訂閱內容的即時顯示。
+  - 額外設置 https://github.com/YiHsinTseng/NotificationSystem
 
 - **監控與日誌記錄**  
   - 系統的可觀測性由Prometheus與Grafana提供，設置簡易監控指標，確保系統穩定運行。
