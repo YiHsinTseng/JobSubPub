@@ -31,7 +31,7 @@ const searchAndSaveJobs = async (sources, keyword) => {
   return { totalCountAllSources, allJobs };
 };
 
-const job = async (next) => {
+const job = async () => {
   try {
     const sources = await sourceLoader();
     if (sources.length > 0) {

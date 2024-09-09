@@ -11,7 +11,7 @@ RUN pip install poetry
 COPY ../scraper_service /app/scraper_service
 
 # 刪除可能不需要的檔案或目錄(以免報錯)
-RUN rm -rf /app/scraper_service/.venv/
+# RUN rm -rf /app/scraper_service/.venv/
 
 # 安裝 Python 依賴
 RUN poetry install
