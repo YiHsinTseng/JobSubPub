@@ -1,10 +1,35 @@
 const services = require('../services/subs');
 
+const getJobSubs = async (req, res, next) => {
+  const { user_id } = req.params;// 修改格式
+  try {
+    const result = await services.getJobSubs(user_id);// 這樣雖然快，但是可能會欺騙api
+    // sub需要校驗資料格式
+    res.status(200).json(result);
+  } catch (error) {
+    // console.error('Error adding job_subs table:', error);
+    // res.status(500).json({ error: 'Internal Server Error' });
+    console.log(error.message);
+    next(error);
+  }
+};
+
+const getIdSubs = async (req, res, next) => {
+  const { user_id } = req.params;// 修改格式
+  try {
+    const result = await services.getIdSubs(user_id);// 這樣雖然快，但是可能會欺騙api
+    // sub需要校驗資料格式
+    res.status(200).json(result);
+  } catch (error) {
+    // console.error('Error adding job_subs table:', error);
+    // res.status(500).json({ error: 'Internal Server Error' });
+    console.log(error.message);
+    next(error);
+  }
+};
+
 const addJobSubs = async (req, res, next) => {
   // const { user_id, sub } = req.body.data;
-
-  console.log(req.body);
-
   try {
     const { user_id } = req.body;// 修改格式
     const { sub } = req.body.data;
@@ -50,5 +75,5 @@ const postIdSubs = async (req, res, next) => {
 };
 
 module.exports = {
-  addJobSubs, postIdSubs,
+  addJobSubs, postIdSubs, getIdSubs, getJobSubs,
 };

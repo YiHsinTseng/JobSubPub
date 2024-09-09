@@ -42,6 +42,58 @@ const getSubscriptionConditions = async (offset = 0, limit = 100) => {
 //   }
 // };
 
+const getJobSubs = async (user_id) => {
+  try {
+    // 使用 SQL 查詢，假設你的表名為 job_id_subscription
+    const query = 'SELECT industries, job_info FROM job_subscriptions WHERE user_id = $1';
+    const result = await pool.query(query, [user_id]);
+
+    if (result.rows.length === 0) {
+      return { industries: [], job_info: [] };
+    }
+
+    // 取出查詢結果中的 JSONB 欄位
+    const row = result.rows[0];
+    const Industries = row.industries;
+    const JobInfo = row.job_info;
+
+    // 返回 JSON 格式
+    return {
+      industries: Industries,
+      job_info: JobInfo,
+    };
+  } catch (err) {
+    console.error('查詢錯誤:', err);
+    throw err;
+  }
+};
+
+const getIdSubs = async (user_id) => {
+  try {
+    // 使用 SQL 查詢，假設你的表名為 job_id_subscription
+    const query = 'SELECT job_ids, company_names FROM job_id_subscriptions WHERE user_id = $1';
+    const result = await pool.query(query, [user_id]);
+
+    if (result.rows.length === 0) {
+      return { job_ids: [], company_names: [] };
+    }
+
+    // 取出查詢結果中的 JSONB 欄位
+    const row = result.rows[0];
+    const jobIds = row.job_ids;
+    const companyNames = row.company_names;
+
+    // 返回 JSON 格式
+    return {
+      job_ids: jobIds,
+      company_names: companyNames,
+    };
+  } catch (err) {
+    console.error('查詢錯誤:', err);
+    throw err;
+  }
+};
+
 const addJobSubs = async (user_id, sub) => {
   const checkQuery = 'SELECT COUNT(*) FROM job_subscriptions WHERE user_id = $1';
   const insertQuery = `
@@ -271,5 +323,5 @@ const deleteIdSubs = async (user_id, sub) => {
 };
 
 module.exports = {
-  addJobSubs, addIdSubs, deleteIdSubs, getSubscriptionConditions,
+  addJobSubs, addIdSubs, deleteIdSubs, getSubscriptionConditions, getIdSubs, getJobSubs,
 };
