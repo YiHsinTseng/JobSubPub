@@ -22,16 +22,17 @@ services:
   postgres:
     image: postgres:latest
     environment:
-      POSTGRES_USER: test
-      POSTGRES_PASSWORD: test
-      POSTGRES_DB: jobs
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    #端口避免與本地端口一樣
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U test -d jobs" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 10s
       retries: 5
       start_period: 30s
@@ -106,7 +107,7 @@ services:
     restart: always
     container_name: postgres_exporter
     environment:
-      DATA_SOURCE_NAME: "postgresql://test:test@postgres:5432/jobs?sslmode=disable"
+      DATA_SOURCE_NAME: "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5433/${DB_NAME}?sslmode=disable"
     ports:
       - "9187:9187"
     depends_on:

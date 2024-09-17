@@ -63,14 +63,36 @@ JobSubPub旨在自動化地從職缺網站爬取職缺資料，並根據使用�
     ```bash
     git clone https://github.com/YiHsinTseng/JobSubPub.git
     ```
-
-2. 移動到Docker資料夾：
+2. 移動到 Docker 資料夾：
 
     ```bash
     cd Docker
     ```
 
-3. 執行Docker指令運行：
+2. 根據 .env.example 建立.env
+
+    ```
+    PORT=4000
+    PUB_PORT=4010
+
+    DB_HOST=postgres
+    DB_PORT=5432
+    DB_NAME=jobs
+    DB_USER=test
+    DB_PASSWORD=test
+
+    MQTT_BROKER_URL=mqtt://mosquitto:1884
+    CLIENT_PORT=http://localhost:5050
+    PASSPORT_SECRET=YOUR_SECRET
+    JWT_EXPIRES_IN=1d
+
+    MQTT_TOPIC=notifications
+    MQTT_JOB=job_id_channel
+    MQTT_COMPANY=company_name_channel
+    QOS_LEVEL=1
+    ```
+
+4. 執行 Docker 指令運行：
 
     ```bash
     docker-compose up --build

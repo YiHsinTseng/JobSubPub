@@ -21,27 +21,6 @@ const getSubscriptionConditions = async (offset = 0, limit = 100) => {
   }
 };
 
-// 批量抓取訂閱條件
-// const addJobSubs = async (user_id, sub) => {
-//   const query = `
-//   INSERT INTO job_subscriptions (user_id, industries, job_info, created_at)
-//   VALUES ($1, $2::jsonb, $3::jsonb, NOW());
-// `;
-
-//   const values = [
-//     user_id,
-//     JSON.stringify(sub.industries), // 假设 sub.industries 是 JSON 对象
-//     JSON.stringify(sub.job_info), // 假设 sub.job_info 是 JSON 对象
-//   ];
-
-//   try {
-//     await pool.query(query, values);
-//     console.log('Insert successful');
-//   } catch (error) {
-//     console.error('Error adding job subscriptions:', error);
-//   }
-// };
-
 const getJobSubs = async (user_id) => {
   try {
     // 使用 SQL 查詢，假設你的表名為 job_id_subscription
@@ -122,33 +101,6 @@ const addJobSubs = async (user_id, sub) => {
     console.log('Record inserted successfully');
   }
 };
-
-// 批量抓取訂閱條件
-// const addIdSubs = async (user_id, sub) => {
-//   // 避免重複id
-// const query = `
-//   INSERT INTO job_id_subscriptions (user_id, job_ids, company_names, created_at)
-//   VALUES ($1, $2::jsonb, $3::jsonb, NOW())
-//   ON CONFLICT (user_id)
-//   DO UPDATE SET
-//     job_ids = EXCLUDED.job_ids,
-//     company_names = EXCLUDED.company_names,
-//     created_at = NOW();
-// `;
-
-//   const values = [
-//     user_id,
-//     JSON.stringify(sub.job_ids),
-//     JSON.stringify(sub.company_names),
-//   ];
-
-//   try {
-//     await pool.query(query, values);
-//     console.log('Insert successful');
-//   } catch (error) {
-//     console.error('Error adding job id subscriptions:', error);
-//   }
-// };
 
 const addIdSubs = async (user_id, sub) => {
   const query = `
