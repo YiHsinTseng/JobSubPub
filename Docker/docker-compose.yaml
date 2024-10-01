@@ -20,7 +20,7 @@ services:
       timeout: 10s
 
   postgres:
-    image: postgres:latest
+    image: postgres:16
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -104,6 +104,7 @@ services:
 
   postgres_exporter:
     image: quay.io/prometheuscommunity/postgres-exporter
+    #這個需要是pg16
     restart: always
     container_name: postgres_exporter
     environment:

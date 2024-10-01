@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     people character varying(50),
     place character varying(255),
     update_date DATE,
-    record_time TIMESTAMP,
+    record_time TIMESTAMP WITH TIME ZONE,
     source character varying(50),
     keywords character varying(255),
     job_link character varying(1024) UNIQUE

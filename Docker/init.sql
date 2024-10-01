@@ -22,11 +22,11 @@ CREATE TABLE IF NOT EXISTS job_subscriptions (
     user_id UUID NOT NULL UNIQUE,
     industries JSONB NOT NULL,
     job_info JSONB NOT NULL,
-    exclude_job_title jsonb NOT NULL,
+    exclude_job_title JSONB NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO job_subscriptions (user_id, industries, job_info, created_at)
+INSERT INTO job_subscriptions (user_id, industries, job_info, exclude_job_title, created_at)
 VALUES (
     '0ce32985-7fda-4c20-ad62-3ac0a9b23231',
     '[
@@ -45,6 +45,9 @@ VALUES (
         "jQuery",
         "Node.js"
       ]'::jsonb, -- 假設職位信息
+      '[
+      "Senior"
+      ]'::jsonb,
     NOW() -- 當前時間
 );
 
