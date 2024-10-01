@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const cron = require('node-cron');
 const { publishMessage } = require('../configs/mqttClient');
 const { pool } = require('../configs/dbConfig');
-const { condGen } = require('../utils/jobCondGen');
+// const { condGen } = require('../utils/jobCondGen');
 const { filterJobs } =require('./filterJobs')
 
 const { PASSPORT_SECRET, JWT_EXPIRES_IN, MQTT_TOPIC } = process.env;
@@ -14,7 +14,7 @@ let start = null;
 const getSubscriptionConditions = async (offset = 0, limit = 100) => {
   try {
     const query = `
-      SELECT user_id, industries, job_info 
+      SELECT user_id, industries, job_info, exclude_job_title 
       FROM job_subscriptions 
       ORDER BY id 
       LIMIT $1 OFFSET $2
@@ -24,6 +24,7 @@ const getSubscriptionConditions = async (offset = 0, limit = 100) => {
       user_id: row.user_id,
       industries: row.industries,
       job_info: row.job_info,
+      exclude_job_title: row.exclude_job_title,
     }));
   } catch (error) {
     console.error('Error querying job_subscriptions table:', error);
@@ -42,13 +43,13 @@ async function processPush(conditions) {
   try {
     const jobResults = await filterJobs(conditions);
     jobResults.forEach(({
-      user_id, count, update, sub, queryDate,
+      user_id, count, update, sub, exclude, queryDate,
     }) => {
       const message = JSON.stringify({
         authToken: generateToken(user_id),
         user_id,
         data: {
-          count, update, sub, queryDate,
+          count, update, sub, exclude, queryDate,
         },
       });
       publishMessage(MQTT_TOPIC, message);

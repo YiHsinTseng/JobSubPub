@@ -32,9 +32,12 @@ const addJobSubs = async (req, res, next) => {
   // const { user_id, sub } = req.body.data;
   try {
     const { user_id } = req.body;// 修改格式
-    const { sub } = req.body.data;
-    await services.addJobSubs(user_id, sub);// 這樣雖然快，但是可能會欺騙api
-    // sub需要校驗資料格式
+    const { sub,exclude } = req.body.data; //為了更加可視化
+    //TODO data.sub,data.exlude方便驗證
+
+    // sub需要校驗資料格式是否存在
+    await services.addJobSubs(user_id, sub,exclude);//對訂閱來說這是不同的選項
+
     res.status(200).json('Insert successful');
   } catch (error) {
     // console.error('Error adding job_subs table:', error);

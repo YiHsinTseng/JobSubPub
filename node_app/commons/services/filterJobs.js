@@ -7,24 +7,18 @@ const filterJobs = async (conditions) => {
   try {
     const conditionStrings = conditions.map((cond) => {
       const { user_id } = cond;
-      const { industries, job_info } = cond;
+      const { industries, job_info, exclude_job_title } = cond;
       const {conditionsArray,queryParams} = condGen(cond);
       return {
         user_id,
         conditionString: `(${conditionsArray.join(' AND ')})`,
         queryParams,
         sub: { industries, job_info },
+        exclude: {exclude_job_title }
       };
     });
 
-    const results = await Promise.all(conditionStrings.map(async ({ user_id, conditionString,queryParams, sub}) => {
-      // const query = `
-      //   SELECT Count("industry") AS count
-      //   FROM jobs
-      //   WHERE ${conditionString}
-      // `;
-      
-      //update_date是日期，故DATE操作的時區轉換無用
+    const results = await Promise.all(conditionStrings.map(async ({ user_id, conditionString,queryParams, sub, exclude }) => {    
       const query = `
         WITH JobCounts AS (
           SELECT 
@@ -39,9 +33,8 @@ const filterJobs = async (conditions) => {
         FROM JobCounts
       `;
       const result = await pool.query(query,queryParams);
-      // return { user_id, count: result.rows[0].count, sub };
       return {
-        user_id, count: result.rows[0].total_count, update: result.rows[0].today_count, sub, queryDate: getTime2ISO(new Date()),
+        user_id, count: result.rows[0].total_count, update: result.rows[0].today_count, sub,exclude, queryDate: getTime2ISO(new Date()),
       };
     }));
 

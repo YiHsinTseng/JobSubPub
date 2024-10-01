@@ -1,45 +1,49 @@
 const { pool } = require('../configs/dbConfig');
 
-// 批量抓取訂閱條件
-const getSubscriptionConditions = async (offset = 0, limit = 100) => {
-  try {
-    const query = `
-      SELECT user_id, industries, job_info 
-      FROM job_subscriptions 
-      ORDER BY id 
-      LIMIT $1 OFFSET $2
-    `;
-    const result = await pool.query(query, [limit, offset]);
-    return result.rows.map((row) => ({
-      user_id: row.user_id,
-      industries: row.industries,
-      job_info: row.job_info,
-    }));
-  } catch (error) {
-    console.error('Error querying job_subscriptions table:', error);
-    return [];
-  }
-};
+// 批量抓取訂閱條件（如果允許主動查找的話會用到）
 
+// const getSubscriptionConditions = async (offset = 0, limit = 100) => {
+//   try {
+//     const query = `
+//       SELECT user_id, industries, job_info 
+//       FROM job_subscriptions 
+//       ORDER BY id 
+//       LIMIT $1 OFFSET $2
+//     `;
+//     const result = await pool.query(query, [limit, offset]);
+//     return result.rows.map((row) => ({
+//       user_id: row.user_id,
+//       industries: row.industries,
+//       job_info: row.job_info,
+//     }));
+//   } catch (error) {
+//     console.error('Error querying job_subscriptions table:', error);
+//     return [];
+//   }
+// };
+
+//硬編碼，要與前端配合
 const getJobSubs = async (user_id) => {
   try {
     // 使用 SQL 查詢，假設你的表名為 job_id_subscription
-    const query = 'SELECT industries, job_info FROM job_subscriptions WHERE user_id = $1';
+    const query = 'SELECT industries, job_info, exclude_job_title FROM job_subscriptions WHERE user_id = $1';
     const result = await pool.query(query, [user_id]);
 
     if (result.rows.length === 0) {
-      return { industries: [], job_info: [] };
+      return { industries: [], job_info: [],exclude_job_title:[]};
     }
 
     // 取出查詢結果中的 JSONB 欄位
     const row = result.rows[0];
     const Industries = row.industries;
     const JobInfo = row.job_info;
+    const ExcludeJobTitle = row.exclude_job_title;
 
     // 返回 JSON 格式
     return {
       industries: Industries,
       job_info: JobInfo,
+      exclude_job_title: ExcludeJobTitle,
     };
   } catch (err) {
     console.error('查詢錯誤:', err);
@@ -73,30 +77,35 @@ const getIdSubs = async (user_id) => {
   }
 };
 
-const addJobSubs = async (user_id, sub) => {
+//硬編碼?
+const addJobSubs = async (user_id, sub,exclude) => {
+
   const checkQuery = 'SELECT COUNT(*) FROM job_subscriptions WHERE user_id = $1';
+
+  const values = [user_id]; // 初始化值數組
+  const { rows } = await pool.query(checkQuery, values);
+
+  const fields = [...Object.keys(sub),Object.keys(exclude)]; // 獲取動態字段，都是要存到欄位名
+  //要不要保留Exclude
+  const setClauseString = fields.map((field) => `${field} = EXCLUDED.${field}`).join(', '); 
+
+  const data={sub,exclude}//但是轉成參數
+  Object.values(data).flatMap(item => Object.values(item)).forEach(value => {
+    values.push(JSON.stringify(value)); // 逐個推送元素
+  });
+
+  //如果exclude的資料格式怎樣設計
   const insertQuery = `
-    INSERT INTO job_subscriptions (user_id, industries, job_info, created_at)
-    VALUES ($1, $2::jsonb, $3::jsonb, NOW())
-    ON CONFLICT (user_id) DO UPDATE 
-    SET industries = EXCLUDED.industries,
-        job_info = EXCLUDED.job_info,
-        created_at = EXCLUDED.created_at;
-  `;
+  INSERT INTO job_subscriptions (user_id, ${fields.join(', ')}, created_at)
+  VALUES ($1, ${fields.map((_, i) => `$${i + 2}::jsonb`).join(', ')}, NOW())
+  ON CONFLICT (user_id) DO UPDATE 
+  SET ${setClauseString}, created_at = NOW();
+`;
 
-  const values = [
-    user_id,
-    JSON.stringify(sub.industries),
-    JSON.stringify(sub.job_info),
-  ];
-
-  const { rows } = await pool.query(checkQuery, [user_id]);
   if (parseInt(rows[0].count) > 0) {
-    // Update existing record
     await pool.query(insertQuery, values);
     console.log('Record updated successfully');
   } else {
-    // Insert new record
     await pool.query(insertQuery, values);
     console.log('Record inserted successfully');
   }
@@ -275,5 +284,6 @@ const deleteIdSubs = async (user_id, sub) => {
 };
 
 module.exports = {
-  addJobSubs, addIdSubs, deleteIdSubs, getSubscriptionConditions, getIdSubs, getJobSubs,
+  //addJobSubs, addIdSubs, deleteIdSubs, getSubscriptionConditions, getIdSubs, getJobSubs,
+  addJobSubs, addIdSubs, deleteIdSubs, getIdSubs, getJobSubs,
 };
