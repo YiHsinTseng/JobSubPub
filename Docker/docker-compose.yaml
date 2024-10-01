@@ -107,7 +107,8 @@ services:
     restart: always
     container_name: postgres_exporter
     environment:
-      DATA_SOURCE_NAME: "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5433/${DB_NAME}?sslmode=disable"
+      ##外部本地端口是5433但容器內還是監聽5432
+      DATA_SOURCE_NAME: "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:5432/${DB_NAME}?sslmode=disable"
     ports:
       - "9187:9187"
     depends_on:

@@ -2,7 +2,7 @@
 name = "scraper_service"
 version = "0.1.0"
 description = ""
-authors = ["easontseng <yhsints.dev.gmail.com>"]
+authors = ["easontseng <yhsints@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -16,6 +16,7 @@ schedule = "^1.2.2"
 python-dotenv = "^1.0.1"
 pandas = "^2.2.2"
 flask = "^3.0.3"
+prometheus-client = "^0.21.0"
 
 
 [tool.poetry.group.dev.dependencies]

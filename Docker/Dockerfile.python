@@ -1,20 +1,18 @@
 # 使用官方 Python image作為基礎
-FROM python:latest
+FROM python:latest 
+#這個鏡像太大
 
 # 設定工作目錄
 WORKDIR /app/scraper_service
 
 # 安裝 Poetry
-RUN pip install poetry
+RUN pip install --no-cache-dir poetry
 
 # 複製 Python 應用程式程式碼
 COPY ../scraper_service /app/scraper_service
 
-# 刪除可能不需要的檔案或目錄(以免報錯)
-# RUN rm -rf /app/scraper_service/.venv/
-
 # 安裝 Python 依賴
-RUN poetry install
+RUN poetry install --no-dev
 
 # 設定預設命令
 CMD ["poetry", "run", "python", "main.py"]

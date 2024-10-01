@@ -1,5 +1,5 @@
 # 使用官方 Node.js image作為基礎
-FROM node:latest
+FROM node:alpine
 
 # 設定工作目錄
 WORKDIR /app
@@ -7,9 +7,6 @@ WORKDIR /app
 # 複製 Node.js 應用程式代碼
 COPY node_app/job_service /app
 COPY node_app/commons /app 
-
-# 刪除不需要的檔案或目錄(以免報錯)
-# RUN rm -rf /app/node_modules/
 
 # 安裝 Node.js 依賴
 RUN npm install
