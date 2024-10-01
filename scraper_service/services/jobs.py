@@ -12,7 +12,7 @@ class JobService:
         self.source = source
         self.state_file = f"./data/save_{source.__class__.__name__}.json"
         # self.csv_file = "./data/jobs1111_20240807_node.csv"
-        self.current_date_string = datetime.now().strftime("%Y%m%d")  # 当前日期字符串
+        self.current_date_string = datetime.now().strftime("%Y%m%d")  # 當前日期字符串 #是否要UTC
         self.postgres_handler = PostgresHandler()  # 確保實例化 PostgresHandler
 
     def load_state(self):
@@ -23,13 +23,13 @@ class JobService:
                 if file_date == self.current_date_string:
                     return state
                 else:
-                    # 如果日期不匹配，则返回初始状态
-                    return {'date': self.current_date_string, 'page': 1, 'in_page_count': 0, 'jobs_count': 0}
+                    # 如果日期不匹配，則返回初始狀態
+                    return {'date': self.current_date_string, 'page': 1, 'in_page_count': 0, 'jobs_count': 0,'stop_error':'False'}
         except FileNotFoundError:
-            return {'date': self.current_date_string,'page': 1, 'in_page_count': 0,'jobs_count':0}
+            return {'date': self.current_date_string,'page': 1, 'in_page_count': 0,'jobs_count':0,'stop_error':'False'}
 
-    def save_state(self, page, total_count, in_page_count, jobs_count):
-        state = {'date': self.current_date_string, 'page': page, 'total_count': total_count, 'in_page_count': in_page_count, 'jobs_count': jobs_count}
+    def save_state(self, page, total_count, in_page_count, jobs_count,stop_error):
+        state = {'date': self.current_date_string, 'page': page, 'total_count': total_count, 'in_page_count': in_page_count, 'jobs_count': jobs_count,'stop_error':stop_error}
         with open(self.state_file, 'w') as f:
             json.dump(state, f)
 
@@ -54,17 +54,23 @@ class JobService:
         in_page_count = state['in_page_count']
         jobs_count = state['jobs_count']
         start_time = time.time()
+        restart_count=0
 
         while True:
-            base_url, url = self.source.source_url(keyword, page)
+            base_url, url = self.source.source_url(keyword, page)##生成查詢連結
             try:
-                html_content = requests.get(url).text
+                html_content = requests.get(url).text##過度請求失敗
                 soup = BeautifulSoup(html_content, 'html.parser')
 
                 joblist_dict = self.source.parse_source_job(base_url,keyword,soup=soup)
                 job_list = joblist_dict["job_list"]
                 total_count = joblist_dict["total_count"]
 
+                if not job_list:
+                    raise Exception("url錯誤或過度請求")
+                restart_count=0
+
+                #停止
                 remaining_count = total_count - jobs_count -len(jobs) - jump
                 if remaining_count <= 0:
                     break
@@ -80,16 +86,24 @@ class JobService:
                         print(f'解析職缺資訊失敗: {e}')
                         jump += 1
                         ## skip 此處不會知道具體網址，只會知道是第幾頁的第幾個，錯誤發生在parse中 
+                        
                         continue
 
                 ## 單頁存轉存csv append
                 #  單頁存轉存PostgreSQL(重新載入還是有可能數量出錯)
                 self.postgres_handler.insert_jobs_into_postgres(page_jobs)
-                self.save_state(page, total_count, in_page_count, jobs_count+len(jobs))
+                self.save_state(page, total_count, in_page_count, jobs_count+len(jobs),stop_error="False")
                 page += 1
-
             except Exception as e:
                 print(f'請求失敗: {e}')
+                restart_count += 1
+                
+                print("錯誤請求次數:",restart_count)
+                if restart_count>=5: #重試次數
+                    print("過度請求導致錯誤")
+                    self.save_state(page, total_count, in_page_count, jobs_count+len(jobs),stop_error="True")
+                    break
+                time.sleep(1)
                 continue
 
             remaining_count = total_count - jobs_count -len(jobs) - jump
