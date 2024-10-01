@@ -1,8 +1,9 @@
 # import requests
 from utils.request_utils import make_request
 from bs4 import BeautifulSoup
-from datetime import datetime
-import time
+from datetime import datetime,timedelta
+# import time
+import pytz
 from .base_source import BaseSource
 from models.jobs import JobModel
 
@@ -10,9 +11,14 @@ class Source104(BaseSource):
   def source_url(self, keyword, page):
       base_url=f'https://www.104.com.tw'
       # url = base_url+f'/jobs/search/?ro=1&isnew=0&kwop=7&keyword={keyword}&mode=s&jobsource=2018indexpoc&page={page}'
+      #根據api取得資料
       url = base_url+f'/jobs/search/?ro=1&kwop=7&keyword={keyword}&mode=s&jobsource=2018indexpoc&page={page}'
+    #   https://www.104.com.tw/jobs/search/?ro=1&kwop=7&keyword=node.js&mode=s&jobsource=2018indexpoc&page=1
+      # 不確定是否因為被cloudflare抓到而有限制，而且需要爬蟲錯誤暫停機制，太頻繁也會被擋，但是page仍會繼續計算
+      print(url)
       return base_url,url
 
+  #base_url是為了統一格式
   def parse_source_job(self, base_url, keyword,soup=None, job=None):
       if soup:
           job_list = soup.find_all('article', class_='b-block--top-bord job-list-item b-clearfix js-job-item')
@@ -33,11 +39,12 @@ class Source104(BaseSource):
           place= job.find("ul",class_="b-list-inline b-clearfix job-list-intro b-content").find("li").text
           #update = job.find("span",class_="b-tit__date").text
           ##因為104顯示只顯示更新日期
-          update_parsed =datetime.strptime(job.find("span",class_="b-tit__date").text.strip(), "%m/%d").replace(year=datetime.now().year)
-          if update_parsed > datetime.now():
-              update= update_parsed.replace(year=datetime.now().year - 1)
+          taipei_tz = pytz.timezone('Asia/Taipei')
+          update_parsed_tp =taipei_tz.localize(datetime.strptime(job.find("span",class_="b-tit__date").text.strip(), "%m/%d").replace(year=datetime.now(taipei_tz).year))##datetime是台北時區
+          if update_parsed_tp > datetime.now(taipei_tz):
+              update= (update_parsed_tp.replace(year=datetime.now(taipei_tz).year - 1).astimezone(pytz.utc)+ timedelta(days=1)).isoformat() ##因為UTC跟台北很接近，存入Date格式會有太大誤差
           else:
-              update=update_parsed
+              update=(update_parsed_tp.astimezone(pytz.utc)+ timedelta(days=1)).isoformat()
           if job_salary  is not None:
               # 取得元素的文字內容
               job_salary  = job_salary.text
@@ -61,7 +68,7 @@ class Source104(BaseSource):
                 applicants=people,
                 location=place,
                 update_date=update,
-                record_time=datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
+                record_time=datetime.now(pytz.utc).isoformat(), ##統一改成ISO8601保留時區資訊
                 source="104",
                 keywords=keyword,
                 url=job_link,

@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
-import time
+from datetime import datetime,timedelta
+# import time
+import pytz
 from .base_source import BaseSource
 from models.jobs import JobModel
 
@@ -29,7 +30,8 @@ class Source1111(BaseSource):
             place = job.find('div', class_='other').find("a", attrs={"data-after": True})["data-after"]
             job_salary = job.find('div', class_='other').find("span", attrs={"data-after": True})["data-after"]
             people = job.find('div', class_='people').text[5:].rstrip('人').strip().replace("-", "~")
-            update = datetime.strptime(job.find("div", class_="data").text, "%Y/%m/%d").strftime("%Y-%-m-%-d")
+            taipei_tz = pytz.timezone('Asia/Taipei')
+            update = (taipei_tz.localize(datetime.strptime(job.find("div", class_="data").text.strip(), "%Y/%m/%d")).astimezone(pytz.utc)+ timedelta(days=1)).isoformat()##ISO UTC存入但避免存入Date格式又太大誤差故修正
 
             # Fetch detailed job page
             html_content2 = requests.get(job_link).text
@@ -59,7 +61,7 @@ class Source1111(BaseSource):
                 applicants=people,
                 location=place,
                 update_date=update,
-                record_time=datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S'),
+                record_time=datetime.now(pytz.utc).isoformat(), ##統一改成ISO8601保留時區資訊
                 source="1111",
                 keywords=keyword,
                 url=job_link,

@@ -111,8 +111,8 @@ class PostgresHandler:
                         job['salary'],  
                         job['applicants'],  
                         job['location'],  
-                        job['update_date'],  
-                        job['record_time'],  
+                        job['update_date'],  #如果沒有時區資訊會變成系統時區 此處ISO UTC存入
+                        job['record_time'],  #如果沒有時區資訊會變成系統時區 此處ISO UTC存入
                         job['source'],  
                         job['keywords'],
                         job['url']  

@@ -1,6 +1,6 @@
 const { pool } = require('../configs/dbConfig');
 const {condGen}=require('../utils/jobCondGen')
-const { getDate } = require('../utils/dateUtils');
+const { getTime2ISO } = require('../utils/dateUtils');
 
 // 批量處理查詢(有userid)
 const filterJobs = async (conditions) => {
@@ -9,8 +9,6 @@ const filterJobs = async (conditions) => {
       const { user_id } = cond;
       const { industries, job_info } = cond;
       const {conditionsArray,queryParams} = condGen(cond);
-      // console.log(conditionsArray)
-      // console.log(queryParams)
       return {
         user_id,
         conditionString: `(${conditionsArray.join(' AND ')})`,
@@ -19,17 +17,19 @@ const filterJobs = async (conditions) => {
       };
     });
 
-    const results = await Promise.all(conditionStrings.map(async ({ user_id, conditionString,queryParams, sub }) => {
+    const results = await Promise.all(conditionStrings.map(async ({ user_id, conditionString,queryParams, sub}) => {
       // const query = `
       //   SELECT Count("industry") AS count
       //   FROM jobs
       //   WHERE ${conditionString}
       // `;
+      
+      //update_date是日期，故DATE操作的時區轉換無用
       const query = `
         WITH JobCounts AS (
           SELECT 
             COUNT(*) AS total_count,
-            COUNT(CASE WHEN DATE(update_date) = CURRENT_DATE THEN 1 END) AS today_count
+            COUNT(CASE WHEN update_date = DATE(NOW() AT TIME ZONE 'UTC') THEN 1 END) AS today_count
           FROM jobs
           WHERE ${conditionString}
         )
@@ -41,7 +41,7 @@ const filterJobs = async (conditions) => {
       const result = await pool.query(query,queryParams);
       // return { user_id, count: result.rows[0].count, sub };
       return {
-        user_id, count: result.rows[0].total_count, update: result.rows[0].today_count, sub, queryDate: getDate(),
+        user_id, count: result.rows[0].total_count, update: result.rows[0].today_count, sub, queryDate: getTime2ISO(new Date()),
       };
     }));
 
