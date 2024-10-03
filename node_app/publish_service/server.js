@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const testRoutes = require('./routes/test');
-const { processJobs, setupScheduledJobs } = require('./services/pub');
+const { setupCronJobs } = require('./services/pub');
 const apiErrorHandler = require('./middlewares/apiErrorHandler');
 require('./services/act_pub');
 const { monitoringMiddleware, prometheusMetricsHandler } = require('./metrics'); // 引入你的 metrics 模組
@@ -30,5 +30,4 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-setupScheduledJobs();
-// processJobs();
+let cronJobs=setupCronJobs();

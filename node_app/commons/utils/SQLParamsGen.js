@@ -1,7 +1,7 @@
 
-const condGen = (cond) => {
+const jobCondGen = (conditions) => {
   
-  const { industries, job_info, exclude_job_title } = cond; //因為不同資料有不同特性，所以採用硬編碼 
+  const { industries, job_info, exclude_job_title } = conditions; //因為不同資料有不同特性，所以暫採硬編碼 
   const queryParams = [];
 
   let industryCondition = '';
@@ -11,7 +11,7 @@ const condGen = (cond) => {
   }
 
   let job_infoCondition = '';
-  if (job_info && job_info.length > 0) { // 修正判斷錯誤
+  if (job_info && job_info.length > 0) { 
     job_infoCondition = `
     EXISTS (
       SELECT 1
@@ -23,7 +23,6 @@ const condGen = (cond) => {
     ;
   }
 
-  // 處理排除的職位標題
   let excludedJobTitleCondition = '';
   if (exclude_job_title && exclude_job_title.length > 0) {
     excludedJobTitleCondition = `
@@ -33,16 +32,18 @@ const condGen = (cond) => {
       WHERE job_title LIKE ANY(ARRAY[${exclude_job_title.map((_, i) => `$${i + industries.length + job_info.length + 1}`).join(', ')}])
     )
   `;
-    queryParams.push(...exclude_job_title.map(title => `%${title}%`)); // Add parameters with wildcards
+    queryParams.push(...exclude_job_title.map(title => `%${title}%`));
   }
 
-  // 聚合所有條件
   const conditionsArray = [];
   if (industryCondition) conditionsArray.push(industryCondition);
   if (job_infoCondition) conditionsArray.push(job_infoCondition);
   if (excludedJobTitleCondition) conditionsArray.push(excludedJobTitleCondition);
 
-  return {conditionsArray, queryParams};
+  const conditionString = conditionsArray.length > 0 ? `(${conditionsArray.join(' AND ')})` : 'TRUE';
+
+
+  return {conditionString, queryParams};
 };
 
-module.exports={condGen}
+module.exports={jobCondGen}

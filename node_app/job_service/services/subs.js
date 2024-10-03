@@ -1,26 +1,5 @@
 const { pool } = require('../configs/dbConfig');
 
-// 批量抓取訂閱條件（如果允許主動查找的話會用到）
-
-// const getSubscriptionConditions = async (offset = 0, limit = 100) => {
-//   try {
-//     const query = `
-//       SELECT user_id, industries, job_info 
-//       FROM job_subscriptions 
-//       ORDER BY id 
-//       LIMIT $1 OFFSET $2
-//     `;
-//     const result = await pool.query(query, [limit, offset]);
-//     return result.rows.map((row) => ({
-//       user_id: row.user_id,
-//       industries: row.industries,
-//       job_info: row.job_info,
-//     }));
-//   } catch (error) {
-//     console.error('Error querying job_subscriptions table:', error);
-//     return [];
-//   }
-// };
 
 //硬編碼，要與前端配合
 const getJobSubs = async (user_id) => {

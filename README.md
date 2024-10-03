@@ -90,6 +90,7 @@ JobSubPub旨在自動化地從職缺網站爬取職缺資料，並根據使用�
     MQTT_JOB=job_id_channel
     MQTT_COMPANY=company_name_channel
     QOS_LEVEL=1
+    PUBLISH_CRON_TIME='00 22 * * *'
     ```
 
 4. 執行 Docker 指令運行：

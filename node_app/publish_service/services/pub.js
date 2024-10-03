@@ -2,99 +2,87 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const cron = require('node-cron');
 const { publishMessage } = require('../configs/mqttClient');
-const { pool } = require('../configs/dbConfig');
-// const { condGen } = require('../utils/jobCondGen');
-const { filterJobs } =require('./filterJobs')
+
+const { getUsersFilteredJobs,getUsersSubscriptionConditionsPaginated } =require('./batchQuery')
 
 const { PASSPORT_SECRET, JWT_EXPIRES_IN, MQTT_TOPIC } = process.env;
 
-let start = null;
+function generateToken (user_id) {
+  return jwt.sign({ user_id }, PASSPORT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
 
-// 批量抓取訂閱條件
-const getSubscriptionConditions = async (offset = 0, limit = 100) => {
-  try {
-    const query = `
-      SELECT user_id, industries, job_info, exclude_job_title 
-      FROM job_subscriptions 
-      ORDER BY id 
-      LIMIT $1 OFFSET $2
-    `;
-    const result = await pool.query(query, [limit, offset]);
-    return result.rows.map((row) => ({
-      user_id: row.user_id,
-      industries: row.industries,
-      job_info: row.job_info,
-      exclude_job_title: row.exclude_job_title,
-    }));
-  } catch (error) {
-    console.error('Error querying job_subscriptions table:', error);
-    return [];
-  }
-};
+function publishFilteredJobsForUsers(usersFilteredJobs){
+  usersFilteredJobs.forEach(({
+    user_id, count, update, sub, exclude, queryDate,
+  }) => {
+    const message = JSON.stringify({
+      authToken: generateToken(user_id),
+      user_id,
+      data: {
+        count, update, sub, exclude, queryDate,
+      },
+    });
+    publishMessage(MQTT_TOPIC, message);
+  });
+}
 
-const generateToken = (user_id) => jwt.sign({ user_id }, PASSPORT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-
-async function processPush(conditions) {
-  if (conditions === 'end') {
+async function processUserJobPushes(usersConditions,START_TIME) {
+  //外部停止條件
+  if (usersConditions === 'end') {
     console.log('Processing completed');
-    console.log('Processing time:', new Date() - start);
+    console.log('Processing time:', new Date() - START_TIME);
     return;
   }
+  //一批推送
   try {
-    const jobResults = await filterJobs(conditions);
-    jobResults.forEach(({
-      user_id, count, update, sub, exclude, queryDate,
-    }) => {
-      const message = JSON.stringify({
-        authToken: generateToken(user_id),
-        user_id,
-        data: {
-          count, update, sub, exclude, queryDate,
-        },
-      });
-      publishMessage(MQTT_TOPIC, message);
-    });
+    const usersFilteredJobs = await getUsersFilteredJobs(usersConditions);
+    publishFilteredJobsForUsers(usersFilteredJobs)
+
   } catch (error) {
     console.error('Error while processing conditions:', error);
   }
 }
 
-async function processJobs() {
+async function processBatchUserJobs() {
   let offset = 0;
   const limit = 5000;
-  let subscriptionConditions;
-  start = new Date();
+  let usersSubscriptionConditions;
+  const START_TIME = new Date();
   while (true) {
-    subscriptionConditions = await getSubscriptionConditions(offset, limit);
+    //批量拉取訂閱條件
+    usersSubscriptionConditions = await getUsersSubscriptionConditionsPaginated(offset, limit);
     offset += limit;
-    if (subscriptionConditions.length === 0) {
-      processPush('end');
+    if (usersSubscriptionConditions.length === 0) {
+      processUserJobPushes('end',START_TIME);
       break;
     }
-    await processPush(subscriptionConditions);
+    await processUserJobPushes(usersSubscriptionConditions);
   }
 }
 
-let scheduledJob;
-function setupScheduledJobs() {
-  scheduledJob = cron.schedule('43 4 * * *', () => {
+//定時推播(UTC時間)與人為介入
+
+function setupCronJobs() {
+  const PUBLISH_CRON_TIME=process.env.PUBLISH_CRON_TIME
+  cronJobs = cron.schedule(PUBLISH_CRON_TIME, () => {
     console.log('Running scheduled job at', new Date());
-    processJobs();
+    processBatchUserJobs();
   }, { scheduled: true });
+  return cronJobs
 }
 
-function startScheduledJob() {
-  if (scheduledJob) {
-    scheduledJob.start();
+function startCronJobs() {
+  if (cronJobs) {
+    cronJobs.start();
     console.log('Scheduled job started.');
   } else {
     console.log('Scheduled job is not defined.');
   }
 }
 
-function stopScheduledJob() {
-  if (scheduledJob) {
-    scheduledJob.stop();
+function stopCronJobs() {
+  if (cronJobs) {
+    cronJobs.stop();
     console.log('Scheduled job stopped.');
   } else {
     console.log('Scheduled job is not defined.');
@@ -102,8 +90,8 @@ function stopScheduledJob() {
 }
 
 module.exports = {
-  processJobs,
-  setupScheduledJobs,
-  startScheduledJob,
-  stopScheduledJob,
+  processBatchUserJobs,
+  setupCronJobs,
+  startCronJobs,
+  stopCronJobs,
 };
