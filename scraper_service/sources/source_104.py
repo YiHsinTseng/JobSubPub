@@ -21,38 +21,33 @@ class Source104(BaseSource):
   #base_url是為了統一格式
   def parse_source_job(self, base_url, keyword,soup=None, job=None):
       if soup:
-          job_list = soup.find_all('article', class_='b-block--top-bord job-list-item b-clearfix js-job-item')
-          total_count = int(soup.find('meta', attrs={'name': 'description'})['content'].split('－')[1].split()[0])
+          job_list = soup.find_all('div', class_='job-list-container')##改版
+          api_url = base_url+f'/jobs/search/api/jobs?jobsource=2018indexpoc&keyword={keyword}&kwop=7&mode=s&order=15&page=1&pagesize=20&ro=1'
+          data=make_request(api_url).json()
+          total_count=data.get('metadata').get("pagination").get("total")
           return {
               "job_list": job_list,
               "total_count": total_count
           }
       elif job:
-          job_title = job['data-job-name']  # 工作名稱
-          job_link = "https:" + job.find('a', class_='js-job-link').get('href')
-          company_name = job['data-cust-name']  # 公司名稱
-          industry = job["data-indcat-desc"] 
-          job_desc = job.find('p', class_='job-list-item__info').text.strip()  # 工作描述，要完整就要換地方爬
-          job_salary = job.find('span', class_='b-tag--default')
-          people = job.find("a", class_="b-link--gray gtm-list-apply").text[:-2].rstrip('人').strip()
-          job_exp= job.find("ul",class_="b-list-inline b-clearfix job-list-intro b-content").find_all("li")[1].text
-          place= job.find("ul",class_="b-list-inline b-clearfix job-list-intro b-content").find("li").text
-          #update = job.find("span",class_="b-tit__date").text
+          job_title = job.find('a', class_='info-job__text').text.strip()
+          job_link = job.find('a', class_='info-job__text')['href']
+          company_name = job.find('a', class_='info-company__text').text.strip()
+          industry = job.find('span', class_='info-company-addon-type').text.strip()
+          job_desc = job.find('div', class_='info-description').text.strip()  # 工作描述，要完整就要換地方爬
+          job_exp = job.find('a', href=lambda x: x and 'jobexp' in x).text.strip()
+          job_salary = job.find('a', attrs={'data-gtm-joblist': lambda x: x and x.startswith('職缺-薪資')}).text
+          people = job.find('a', class_='action-apply__range').text.strip()[:-2].rstrip('人').strip()
+          place = job.find('span', class_='info-tags__text').text.strip()
+         
           ##因為104顯示只顯示更新日期
           taipei_tz = pytz.timezone('Asia/Taipei')
-          update_parsed_tp =taipei_tz.localize(datetime.strptime(job.find("span",class_="b-tit__date").text.strip(), "%m/%d").replace(year=datetime.now(taipei_tz).year))##datetime是台北時區
+          update_string=job.find("div",class_="date-container").text.strip()
+          update_parsed_tp =taipei_tz.localize(datetime.strptime(update_string, "%m/%d").replace(year=datetime.now(taipei_tz).year))##datetime是台北時區
           if update_parsed_tp > datetime.now(taipei_tz):
               update= (update_parsed_tp.replace(year=datetime.now(taipei_tz).year - 1).astimezone(pytz.utc)+ timedelta(days=1)).isoformat() ##因為UTC跟台北很接近，存入Date格式會有太大誤差
           else:
               update=(update_parsed_tp.astimezone(pytz.utc)+ timedelta(days=1)).isoformat()
-          if job_salary  is not None:
-              # 取得元素的文字內容
-              job_salary  = job_salary.text
-              if(job_salary=="遠端工作"):
-                  job_salary  =job.find('a', class_='b-tag--default').text
-          else:
-              job_salary  =job.find('a', class_='b-tag--default').text
-      
           data=make_request(job_link).json()
           job_info=[item['description'] for item in data["data"]["condition"]["specialty"]]
           job_condition= data["data"]["condition"]["other"]
