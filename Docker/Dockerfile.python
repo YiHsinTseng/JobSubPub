@@ -1,6 +1,5 @@
 # 使用官方 Python image作為基礎
-FROM python:latest 
-#這個鏡像太大
+FROM python:3.9.7 
 
 # 設定工作目錄
 WORKDIR /app/scraper_service

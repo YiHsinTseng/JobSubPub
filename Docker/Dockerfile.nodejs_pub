@@ -1,6 +1,9 @@
 # 使用官方 Node.js image作為基礎
 FROM node:alpine
 
+# 安裝 pnpm
+RUN npm install -g pnpm
+
 # 設定工作目錄
 WORKDIR /app
 
@@ -9,7 +12,7 @@ COPY node_app/publish_service /app
 COPY node_app/commons /app 
 
 # 安裝 Node.js 依賴
-RUN npm install
+RUN pnpm install --production
 
 # 設定預設命令
 CMD ["node", "server.js"]
