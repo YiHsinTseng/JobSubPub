@@ -2,7 +2,6 @@ require('dotenv').config();
 
 const passport = require('passport');
 const JwtStrategy = require('passport-jwt').Strategy;
-const { ExtractJwt } = require('passport-jwt');
 
 const { pool } = require('./dbConfig');
 
@@ -14,16 +13,23 @@ opts.secretOrKey = process.env.PASSPORT_SECRET;
 passport.use(
   new JwtStrategy(opts, async (jwt_payload, done) => {
     try {
-      // 從數據庫中查找匹配的 user_id
+    
+      // 以query驗證為主
+     
       const query = 'SELECT * FROM job_subscriptions WHERE user_id = $1';
       const values = [jwt_payload.user_id];
-
       const result = await pool.query(query, values);
 
+      const jwtExp=jwt_payload.exp
+      const expDateUTC=new Date(jwtExp * 1000);
+
+      const jwtIat=jwt_payload.iat
+      const iatDateUTC=new Date(jwtIat * 1000);
+
       if (result.rows.length > 0) {
-        // 如果找到匹配的記錄，將其作為驗證成功的用戶對象返回
         const foundCustomer = result.rows[0];
-        return done(null, foundCustomer); // req.user <= foundCustomer
+        const user={ user_info: foundCustomer, iat_time: iatDateUTC ,exp_time: expDateUTC }
+        return done(null, user); // req.user <= foundCustomer
       }
 
       return done(null, false); // 未找到匹配的記錄，驗證失敗

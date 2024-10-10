@@ -5,14 +5,22 @@ const authenticateJwt = (req, res, next) => {
   if (!token) {
     return res.status(401).send({ status: 'fail', message: 'Missing authToken' });
   }
-  passport.authenticate('jwt', { session: false }, (err, user_id) => {
-    // 如果出現錯誤，或者未找到用戶，返回 401 錯誤
-    if (err || !user_id) {
-      return res.status(401).send({ status: 'fail', message: 'Your authToken has expired or is invalid.' });
+  passport.authenticate('jwt', { session: false }, (err, user) => {
+
+    if (err || !user) {
+      return res.status(401).send({ status: 'fail', message: 'Your authToken is invalid.' });
     }
 
-    // 如果身份驗證成功，將用戶資訊存儲在 req.user 中，並繼續處理下一個中間件或路由處理程序
-    req.user = user_id;
+    const{ user_info, iat_time ,exp_time } = user
+
+    if (exp_time < new Date()) {
+      message = 'Your authToken has expired';
+      return res.status(400).json({status: 'fail',message });
+    }
+    
+    req.user = user_info;
+    req.jwtIat=iat_time
+   
     next();
   })(req, res, next);
 };
