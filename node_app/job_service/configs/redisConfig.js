@@ -1,6 +1,8 @@
 const redis = require('redis');
 
-const client = redis.createClient();
+const client = redis.createClient({
+  url: 'redis://my-redis:6379',
+});
 
 // 確保 Redis 連線
 (async () => {
