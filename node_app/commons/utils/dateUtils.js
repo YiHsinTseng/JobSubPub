@@ -4,19 +4,13 @@ const { DateTime } = require('luxon');
 
 
 function getcurrentDate() {
-  const currentDate = new Date();
-  const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
-  return currentDateOnly;
+  const currentDate = new Date().setHours(0, 0, 0, 0);
+  return currentDate;
 }
 
 function getTime2ISO(date) {
   return DateTime.fromJSDate(date).toUTC().toISO();
 }
-
-function getTime2ISO(date) {
-  return DateTime.fromJSDate(date).toUTC().toISO();
-}
-
 
 function isDateString(dateString){
   const date = new Date(dateString); 
