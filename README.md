@@ -91,6 +91,7 @@ JobSubPub旨在自動化地從職缺網站爬取職缺資料，並根據使用�
     MQTT_COMPANY=company_name_channel
     QOS_LEVEL=1
     PUBLISH_CRON_TIME='00 22 * * *'
+    REDIS_URL='redis://my-redis:6379'
     ```
 
 4. 執行 Docker 指令運行：

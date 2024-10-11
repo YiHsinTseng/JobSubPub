@@ -1,7 +1,10 @@
 const redis = require('redis');
+require('dotenv').config(); // 加载环境变量
+
+const redisUrl = process.env.REDIS_URL;
 
 const client = redis.createClient({
-  url: 'redis://my-redis:6379',
+  url: redisUrl,
 });
 
 // 確保 Redis 連線

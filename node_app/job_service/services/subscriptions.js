@@ -127,6 +127,100 @@ const deleteSubscribedCompany = async (user_id, company_name) => {
   }
 };
 
+const updateJobChannel = async (job_id, user_id) => {
+  try {
+    const query = `
+    INSERT INTO job_id_channel (job_id, user_ids)
+    VALUES ($1, to_jsonb(ARRAY[$2]::text[]))
+    ON CONFLICT (job_id)
+    DO UPDATE 
+    SET user_ids = COALESCE(job_id_channel.user_ids, '[]'::jsonb) || to_jsonb(ARRAY[$2]::text[]);
+    `;
+
+    const result = await pool.query(query, [job_id, user_id]);
+
+    if (result.rowCount > 0) {
+      console.log(`User ID ${user_id} added to job ID ${job_id}`);
+    } else {
+      console.log(`Job ID ${job_id} not found.`);
+    }
+  } catch (error) {
+    console.error('Error updating user_ids:', error);
+  }
+};
+
+const deleteJobChannel = async (job_id, user_id) => {
+  try {
+    const query = `
+      UPDATE job_id_channel
+      SET user_ids = (
+        SELECT jsonb_agg(elems)
+        FROM jsonb_array_elements(user_ids) elems
+        WHERE elems != to_jsonb($2::text)
+      )
+      WHERE job_id = $1
+      AND user_ids @> to_jsonb(ARRAY[$2]::text[]);
+    `;
+
+    const result = await pool.query(query, [job_id, user_id]);
+
+    if (result.rowCount > 0) {
+      console.log(`User ID ${user_id} removed from job ID ${job_id}`);
+    } else {
+      console.log(`Job ID ${job_id} not found or User ID ${user_id} was not subscribed.`);
+    }
+  } catch (error) {
+    console.error('Error deleting user_id:', error);
+  }
+};
+
+const updateCompanyChannel = async (company_name, user_id) => {
+  try {
+    const query = `
+    INSERT INTO company_name_channel (company_name, user_ids)
+    VALUES ($1, to_jsonb(ARRAY[$2]::text[]))
+    ON CONFLICT (company_name)
+    DO UPDATE 
+    SET user_ids = COALESCE(company_name_channel.user_ids, '[]'::jsonb) || to_jsonb(ARRAY[$2]::text[]);
+    `;
+
+    const result = await pool.query(query, [company_name, user_id]);
+
+    if (result.rowCount > 0) {
+      console.log(`User ID ${user_id} added to company ${company_name}`);
+    } else {
+      console.log(`Company ${company_name} not found.`);
+    }
+  } catch (error) {
+    console.error('Error updating user_ids:', error);
+  }
+};
+
+const deleteCompanyChannel = async (company_name, user_id) => {
+  try {
+    const query = `
+      UPDATE company_name_channel
+      SET user_ids = (
+        SELECT jsonb_agg(elems)
+        FROM jsonb_array_elements(user_ids) elems
+        WHERE elems != to_jsonb($2::text)
+      )
+      WHERE company_name = $1
+      AND user_ids @> to_jsonb(ARRAY[$2]::text[]);
+    `;
+
+    const result = await pool.query(query, [company_name, user_id]);
+
+    if (result.rowCount > 0) {
+      console.log(`User ID ${user_id} removed from company ${company_name}`);
+    } else {
+      console.log(`Company ${company_name} not found or User ID ${user_id} was not subscribed.`);
+    }
+  } catch (error) {
+    console.error('Error deleting user_id:', error);
+  }
+};
+
 const createSubscribedEntities = async (user_id) => {
   const query = `SELECT 
     jsonb_build_object(
@@ -163,4 +257,8 @@ module.exports = {
   addSubscribedCompany,
   deleteSubscribedCompany,
   createSubscribedEntities,
+  updateJobChannel,
+  deleteJobChannel,
+  updateCompanyChannel,
+  deleteCompanyChannel,
 };

@@ -73,6 +73,7 @@ const addSubscribedJob = async (req, res, next) => {
     await services.addSubscribedJob(user_id, job_id);
 
     await updateSubscribedEntitiesinRedis(user_id, client);
+    await services.updateJobChannel(job_id, user_id);
 
     return res.status(200).json('Insert successful');
   } catch (error) {
@@ -90,6 +91,7 @@ const deleteSubscribedJob = async (req, res, next) => {
 
     await services.deleteSubscribedJob(user_id, job_id);
     await updateSubscribedEntitiesinRedis(user_id, client);
+    await services.deleteJobChannel(job_id, user_id);
     return res.status(200).json('Delete successful');
   } catch (error) {
     console.log(error.message);
@@ -105,6 +107,7 @@ const addSubscribedCompany = async (req, res, next) => {
     validateUser(user_id);
     await services.addSubscribedCompany(user_id, company_name);
     await updateSubscribedEntitiesinRedis(user_id, client);
+    await services.updateCompanyChannel(company_name, user_id);
     return res.status(200).json('Insert successful');
   } catch (error) {
     next(error);
@@ -119,6 +122,7 @@ const deleteSubscribedCompany = async (req, res, next) => {
 
     await services.deleteSubscribedCompany(user_id, company_name);
     await updateSubscribedEntitiesinRedis(user_id, client);
+    await services.deleteCompanyChannel(company_name, user_id);
 
     return res.status(200).json('Delete successful');
   } catch (error) {
