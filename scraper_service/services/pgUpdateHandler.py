@@ -27,6 +27,7 @@ class PostgresHandler:
         self.create_subscription_table()
         self.create_id_subscription_table()
         self.create_channel_table()
+        self.create_user_subscriptions_tables()
         self.create_trigger_and_log()
     def create_table(self):
         with open("../postgres_db/create_jobs.sql", 'r', encoding='utf-8') as file:
@@ -69,7 +70,18 @@ class PostgresHandler:
             with self.conn.cursor() as cur:
                 cur.execute(create_act_pub_channel_sql)
                 self.conn.commit()
-            print("表格 'job_id_subscriptions' 已成功創建或已存在。")
+            print("表格 'act_pub_channel_tables' 已成功創建或已存在。")
+        except Exception as e:
+            print(f'創建表格時出錯: {e}')
+            self.conn.rollback()
+    def create_user_subscriptions_tables(self):
+        with open("../postgres_db/create_user_subscriptions.sql", 'r', encoding='utf-8') as file:
+            create_user_subscriptions_sql = file.read()
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(create_user_subscriptions_sql)
+                self.conn.commit()
+            print("表格 'user_subscriptions_tables' 已成功創建或已存在。")
         except Exception as e:
             print(f'創建表格時出錯: {e}')
             self.conn.rollback()

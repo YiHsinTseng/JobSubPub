@@ -34,7 +34,8 @@ def job():
 def main():
     # print("scraper service start")
     job()
-    schedule.every().day.at("09:00").do(job)  # 每天上午9點執行
+    #schedule.every().day.at("09:00").do(job)  # 每天上午9點執行
+    schedule.every(2).hours.do(job) #轉存資料格式怎樣設計
     JOB_STATUS.set(1)
     while True:
         schedule.run_pending()

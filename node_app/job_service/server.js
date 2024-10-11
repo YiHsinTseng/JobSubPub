@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
+
 const jobRoutes = require('./routes/jobs');
-const subRoutes = require('./routes/subs');
+const subRoutes = require('./routes/subscriptions');
 
 const apiErrorHandler = require('./middlewares/apiErrorHandler');
 
