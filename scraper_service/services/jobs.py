@@ -66,14 +66,19 @@ class JobService:
                 job_list = joblist_dict["job_list"]
                 total_count = joblist_dict["total_count"]
 
-                if not job_list:
-                    raise Exception("url錯誤或過度請求")
-                restart_count=0
-
+                if restart_count>=30:
+                    print("過度請求導致錯誤")
+                    self.save_state(page, total_count, in_page_count, jobs_count+len(jobs),stop_error="True")
+                    break
                 #停止
+                #如果沒有total_count要怎麼推測？
                 remaining_count = total_count - jobs_count -len(jobs) - jump
                 if remaining_count <= 0:
                     break
+
+                if not job_list:
+                    raise Exception("url錯誤或過度請求")
+                restart_count=0
                 
                 page_jobs = []
                 for job in job_list: ##恢復到上次的地方很麻煩，目前先以頁為主，重複沒關係，本來就應該以頁為單位存，但內存無法記憶
@@ -101,9 +106,10 @@ class JobService:
                 print("錯誤請求次數:",restart_count)
                 if restart_count>=5: #重試次數
                     print("過度請求導致錯誤")
-                    self.save_state(page, total_count, in_page_count, jobs_count+len(jobs),stop_error="True")
-                    break
-                time.sleep(1)
+                    time.sleep(120) 
+                    continue
+
+                time.sleep(5)
                 continue
 
             remaining_count = total_count - jobs_count -len(jobs) - jump

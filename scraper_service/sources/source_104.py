@@ -36,22 +36,20 @@ class Source104(BaseSource):
           industry = job.find('span', class_='info-company-addon-type').text.strip()
           job_desc = job.find('div', class_='info-description').text.strip()  # 工作描述，要完整就要換地方爬
           job_exp = job.find('a', href=lambda x: x and 'jobexp' in x).text.strip()
-          job_salary = job.find('a', attrs={'data-gtm-joblist': lambda x: x and x.startswith('職缺-薪資')}).text
+          try:
+            job_salary = job.find('a', attrs={'data-gtm-joblist': lambda x: x and x.startswith('職缺-薪資')}).text
+          except:
+            job_salary = None
           people = job.find('a', class_='action-apply__range').text.strip()[:-2].rstrip('人').strip()
           place = job.find('span', class_='info-tags__text').text.strip()
          
-          ##因為104顯示只顯示更新日期
-          taipei_tz = pytz.timezone('Asia/Taipei')
-          update_string=job.find("div",class_="date-container").text.strip()
-          update_parsed_tp =taipei_tz.localize(datetime.strptime(update_string, "%m/%d").replace(year=datetime.now(taipei_tz).year))##datetime是台北時區
-          if update_parsed_tp > datetime.now(taipei_tz):
-              update= (update_parsed_tp.replace(year=datetime.now(taipei_tz).year - 1).astimezone(pytz.utc)+ timedelta(days=1)).isoformat() ##因為UTC跟台北很接近，存入Date格式會有太大誤差
-          else:
-              update=(update_parsed_tp.astimezone(pytz.utc)+ timedelta(days=1)).isoformat()
           data=make_request(job_link).json()
+          #   job_title=data["header"]["jobName"]
+          #   company_name=data["header"]["custName"]
+          #   job_exp=data["data"]["condition"]["workExp"]
           job_info=[item['description'] for item in data["data"]["condition"]["specialty"]]
           job_condition= data["data"]["condition"]["other"]
-          job_desc= data["data"]["jobDetail"]["jobDescription"]
+          update= data["data"]["header"]["appearDate"]
 
           job_instance = JobModel(
                 title=job_title,
