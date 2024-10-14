@@ -4,7 +4,7 @@
 
 ## 系統簡介
 
-JobSubPub旨在自動化地從職缺網站爬取職缺資料，並根據使用者的訂閱條件，通過MQTT推播服務，實時或定時向外部服務傳送通知。此系統採用分散式架構設計，能夠有效地處理大量資料並保障高效能的推播服務。
+JobSubPub旨在自動化定時從職缺網站爬取職缺資料，並根據使用者的訂閱條件，通過MQTT推播服務，實時或定時向外部服務傳送通知。
 
 
 ## **技術棧**
@@ -36,23 +36,23 @@ JobSubPub旨在自動化地從職缺網站爬取職缺資料，並根據使用�
 
 ![deploy-diagram](img/deploy-diagram.png)
 - **爬蟲引擎**  
-  - 使用Python編寫，定時爬取常見職缺網站的職缺資料並更新到資料庫中。
+  - 使用 Python 編寫，定時爬取常見職缺網站的職缺資料並更新到資料庫中。
   
 - **資料庫**  
   - 選用PostgreSQL儲存職缺資料和使用者的訂閱資訊。
-  - 資料庫主要包含職缺表、訂閱表以及推播表，並利用PostgreSQL的JSONB和trigger特性實現動態欄位設計與推播通知。
+  - 資料庫主要包含職缺表、訂閱表以及推播表，並利用 PostgreSQL 的 JSONB 和 trigger 特性實現動態欄位設計與推播通知。
 
 - **應用伺服器**  
-  - 使用Node.js編寫，分為Job Service和Publish Service。
-  - Job Service處理職缺查詢和訂閱操作，
-  - Publish Service負責根據資料庫更新或定時條件推播消息。
+  - 使用 Node.js 編寫，分為 Job Service 和 Publish Service。
+  - Job Service 處理職缺查詢和訂閱操作，
+  - Publish Service 負責根據資料庫更新或定時條件推播消息。
 
 - **外部服務與通知模組**  
-  - 外部服務透過RESTful API與應用伺服器互動，並使用Socket.IO即時向使用者推送通知，實現訂閱內容的即時顯示。
+  - 外部服務透過 RESTful API 與應用伺服器互動，並使用 Socket.IO 即時向使用者推送通知，實現訂閱內容的即時顯示。
   - 額外設置 https://github.com/YiHsinTseng/NotificationSystem
 
 - **監控與日誌記錄**  
-  - 系統的可觀測性由Prometheus與Grafana提供，設置簡易監控指標，確保系統穩定運行。
+  - 系統的可觀測性由 Prometheus 與 Grafana 提供，設置簡易監控指標，確保系統穩定運行。
 
 ## **系統運行**
 
