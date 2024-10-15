@@ -65,7 +65,10 @@ jobs:
             EOF
 
             sudo chmod 600 .env
-
+            sudo yum update -y
+            sudo amazon-linux-extras install docker -y
+            sudo service docker start
+            sudo systemctl enable docker
             cd Docker || exit
             sudo docker system prune -a -f
             docker-compose down --rmi all
