@@ -12,10 +12,10 @@ const { monitoringMiddleware, prometheusMetricsHandler } = require('./metrics');
 const app = express();
 app.use(express.json());
 
-const CLIENT_PORT = process.env.CLIENT_PORT || 4000;
+const CORS_WHITE_LIST = process.env.WHITE_LIST.split(',');
 
 app.use(cors({ // 要注意不同網址問題不然會fetch失敗
-  origin: CLIENT_PORT,
+  origin: CORS_WHITE_LIST,
 }));
 
 // 中間件來處理計時
@@ -29,7 +29,7 @@ app.use(apiErrorHandler);
 app.get('/metrics', prometheusMetricsHandler);
 
 // 啟動伺服器
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.JOBS_PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

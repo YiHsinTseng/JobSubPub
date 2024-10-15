@@ -62,10 +62,10 @@ jobs:
             touch .env
             echo "Creating .env file..."
             {
-              echo "PORT=${{ vars.PORT }}"
+              echo "JOBS_PORT=${{ vars.JOBS_PORT }}"
               echo "PUB_PORT=${{ vars.PUB_PORT }}"
               echo "PUBLISH_CRON_TIME=${{ vars.PUBLISH_CRON_TIME }}"
-              echo "CLIENT_PORT=${{ vars.CLIENT_PORT }}"
+              echo "WHITE_LIST=${{ secrets.WHITE_LIST }}"
               echo "DB_PORT=${{ vars.DB_PORT }}"
               echo "DB_HOST=${{ vars.DB_HOST }}"
               echo "DB_NAME=${{ vars.DB_NAME }}"
