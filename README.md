@@ -72,7 +72,9 @@ JobSubPub旨在自動化定時從職缺網站爬取職缺資料，並根據使�
 2. 根據 .env.example 建立.env
 
     ```
-    PORT=4000
+    WHITE_LIST=http://localhost:5050
+    
+    JOBS_PORT=4000
     PUB_PORT=4010
 
     DB_HOST=postgres
@@ -81,16 +83,19 @@ JobSubPub旨在自動化定時從職缺網站爬取職缺資料，並根據使�
     DB_USER=test
     DB_PASSWORD=test
 
+    LOG_FILE=./data/log.txt
+    
+    PUBLISH_CRON_TIME='00 22 * * *'
+    
     MQTT_BROKER_URL=mqtt://mosquitto:1884
-    CLIENT_PORT=http://localhost:5050
-    PASSPORT_SECRET=YOUR_SECRET
-    JWT_EXPIRES_IN=1d
-
     MQTT_TOPIC=notifications
     MQTT_JOB=job_id_channel
     MQTT_COMPANY=company_name_channel
     QOS_LEVEL=1
-    PUBLISH_CRON_TIME='00 22 * * *'
+
+    PASSPORT_SECRET=YOUR_SECRET
+    JWT_EXPIRES_IN=1d
+
     REDIS_URL='redis://my-redis:6379'
     ```
 
