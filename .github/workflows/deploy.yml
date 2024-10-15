@@ -16,6 +16,7 @@ jobs:
       CLIENT_PORT: ${{ vars.CLIENT_PORT }}
       DB_PORT: ${{ vars.DB_PORT }}
       DB_HOST: ${{ vars.DB_HOST }}
+      DB_NAME: ${{ vars.DB_NAME }}
       DB_USER: ${{ secrets.DB_USER }}
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       MQTT_BROKER_URL: ${{ vars.MQTT_BROKER_URL }}
@@ -26,6 +27,7 @@ jobs:
       PASSPORT_SECRET: ${{ secrets.PASSPORT_SECRET }}
       JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
       REDIS_URL: ${{ vars.REDIS_URL }}
+      LOG_FILE: ${{ vars.LOG_FILE }}
 
     steps:
       - name: Connect to EC2
@@ -52,6 +54,7 @@ jobs:
             CLIENT_PORT=$CLIENT_PORT
             DB_PORT=$DB_PORT
             DB_HOST=$DB_HOST
+            DB_NAME=$DB_NAME
             DB_USER=$DB_USER
             DB_PASSWORD=$DB_PASSWORD
             MQTT_BROKER_URL=$MQTT_BROKER_URL
@@ -62,6 +65,7 @@ jobs:
             PASSPORT_SECRET=$PASSPORT_SECRET
             JWT_EXPIRES_IN=$JWT_EXPIRES_IN
             REDIS_URL=$REDIS_URL
+            LOG_FILE=$LOG_FILE
             EOF
 
             sudo chmod 600 .env
