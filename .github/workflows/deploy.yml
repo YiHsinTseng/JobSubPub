@@ -37,8 +37,17 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }} 
           script: |
-            sudo apt-get update && sudo apt-get install git -y || sudo yum install git -y
-
+            if ! command -v git &> /dev/null; then
+              echo "Git not found. Installing Git..."
+              if command -v apt-get &> /dev/null; then
+                sudo apt-get update && sudo apt-get install git -y
+              elif command -v yum &> /dev/null; then
+                sudo yum install git -y
+              fi
+            else
+              echo "Git is already installed."
+            fi
+            
             if [ ! -d "JobSubPub" ]; then 
               git clone -b test-deploying https://github.com/YiHsinTseng/JobSubPub.git
             fi
@@ -70,12 +79,25 @@ jobs:
 
             sudo chmod 600 .env
 
-            sudo yum update -y
-            sudo yum -y install docker
-            sudo service docker start
-            sudo systemctl enable docker
-            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
+            if ! command -v docker &> /dev/null; then
+              echo "Docker not found. Installing Docker..."
+              sudo yum update -y
+              sudo yum -y install docker
+              sudo service docker start
+              sudo systemctl enable docker
+            else
+              echo "Docker is already installed."
+            fi
+
+            DOCKER_COMPOSE_PATH="/usr/local/bin/docker-compose"
+
+            if [ ! -f "$DOCKER_COMPOSE_PATH" ]; then
+              echo "Docker Compose not found. Downloading..."
+              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o "$DOCKER_COMPOSE_PATH"
+              sudo chmod +x "$DOCKER_COMPOSE_PATH"
+            else
+              echo "Docker Compose is already installed."
+            fi
 
             cd Docker || exit
             sudo docker system prune -a -f
