@@ -38,7 +38,7 @@ jobs:
             sudo apt-get update && sudo apt-get install git -y || sudo yum install git -y
 
             if [ ! -d "JobSubPub" ]; then 
-              git clone -b test-deploying https://github.com/YiHsinTseng/tabcolab-api.git
+              git clone -b test-deploying https://github.com/YiHsinTseng/JobSubPub.git
             fi
 
             cd JobSubPub || exit
