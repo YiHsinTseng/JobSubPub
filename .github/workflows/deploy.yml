@@ -9,26 +9,6 @@ jobs:
   Deploy:
     name: Deploy to EC2
     runs-on: ubuntu-latest
-    env:
-      PORT: ${{ vars.PORT }}
-      PUB_PORT: ${{ vars.PUB_PORT }}
-      PUBLISH_CRON_TIME: ${{ vars.PUBLISH_CRON_TIME }}
-      CLIENT_PORT: ${{ vars.CLIENT_PORT }}
-      DB_PORT: ${{ vars.DB_PORT }}
-      DB_HOST: ${{ vars.DB_HOST }}
-      DB_NAME: ${{ vars.DB_NAME }}
-      DB_USER: ${{ secrets.DB_USER }}
-      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-      MQTT_BROKER_URL: ${{ vars.MQTT_BROKER_URL }}
-      MQTT_TOPIC: ${{ vars.MQTT_TOPIC }}
-      MQTT_JOB: ${{ vars.MQTT_JOB }}
-      MQTT_COMPANY: ${{ vars.MQTT_COMPANY }}
-      QOS_LEVEL: ${{ vars.QOS_LEVEL }}
-      PASSPORT_SECRET: ${{ secrets.PASSPORT_SECRET }}
-      JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
-      REDIS_URL: ${{ vars.REDIS_URL }}
-      LOG_FILE: ${{ vars.LOG_FILE }}
-
     steps:
       - name: Connect to EC2
         uses: appleboy/ssh-action@v1.1.0
@@ -82,27 +62,41 @@ jobs:
             touch .env
             echo "Creating .env file..."
             {
-                echo PORT=${{ vars.PORT }}
-                echo PUB_PORT=${{ vars.PUB_PORT }}
-                echo PUBLISH_CRON_TIME=$PUBLISH_CRON_TIME
-                echo CLIENT_PORT=$CLIENT_PORT
-                echo DB_PORT=$DB_PORT
-                echo DB_HOST=$DB_HOST
-                echo DB_NAME=$DB_NAME
-                echo DB_USER=$DB_USER
-                echo DB_PASSWORD=$DB_PASSWORD
-                echo MQTT_BROKER_URL=$MQTT_BROKER_URL
-                echo MQTT_TOPIC=$MQTT_TOPIC
-                echo MQTT_JOB=$MQTT_JOB
-                echo MQTT_COMPANY=$MQTT_COMPANY
-                echo QOS_LEVEL=$QOS_LEVEL
-                echo PASSPORT_SECRET=$PASSPORT_SECRET
-                echo JWT_EXPIRES_IN=$JWT_EXPIRES_IN
-                echo REDIS_URL=$REDIS_URL
-                echo LOG_FILE=$LOG_FILE
+              echo "PORT=${{ vars.PORT }}"
+              echo "PUB_PORT=${{ vars.PUB_PORT }}"
+              echo "PUBLISH_CRON_TIME=${{ vars.PUBLISH_CRON_TIME }}"
+              echo "CLIENT_PORT=${{ vars.CLIENT_PORT }}"
+              echo "DB_PORT=${{ vars.DB_PORT }}"
+              echo "DB_HOST=${{ vars.DB_HOST }}"
+              echo "DB_NAME=${{ vars.DB_NAME }}"
+              echo "DB_USER=${{ secrets.DB_USER }}"
+              echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
+              echo "MQTT_BROKER_URL=${{ vars.MQTT_BROKER_URL }}"
+              echo "MQTT_TOPIC=${{ vars.MQTT_TOPIC }}"
+              echo "MQTT_JOB=${{ vars.MQTT_JOB }}"
+              echo "MQTT_COMPANY=${{ vars.MQTT_COMPANY }}"
+              echo "QOS_LEVEL=${{ vars.QOS_LEVEL }}"
+              echo "PASSPORT_SECRET=${{ secrets.PASSPORT_SECRET }}"
+              echo "JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}"
+              echo "REDIS_URL=${{ vars.REDIS_URL }}"
+              echo "LOG_FILE=${{ vars.LOG_FILE }}"
             } >> .env
-            cat .env 
 
+
+      DB_PORT: ${{ vars.DB_PORT }}
+      DB_HOST: ${{ vars.DB_HOST }}
+      DB_NAME: ${{ vars.DB_NAME }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      MQTT_BROKER_URL: ${{ vars.MQTT_BROKER_URL }}
+      MQTT_TOPIC: ${{ vars.MQTT_TOPIC }}
+      MQTT_JOB: ${{ vars.MQTT_JOB }}
+      MQTT_COMPANY: ${{ vars.MQTT_COMPANY }}
+      QOS_LEVEL: ${{ vars.QOS_LEVEL }}
+      PASSPORT_SECRET: ${{ secrets.PASSPORT_SECRET }}
+      JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
+      REDIS_URL: ${{ vars.REDIS_URL }}
+      LOG_FILE: ${{ vars.LOG_FILE }}
             sudo chmod 600 .env
 
             sudo docker system prune -a -f
