@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - master
+      - test-deploying
 
 jobs:
   Deploy:
@@ -29,19 +29,21 @@ jobs:
 
     steps:
       - name: Connect to EC2
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.1.0
         with:
           host: ${{ secrets.EC2_HOST }} 
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }} 
           script: |
+            sudo apt-get update && sudo apt-get install git -y || sudo yum install git -y
+
             if [ ! -d "JobSubPub" ]; then 
-              git clone -b master git@github.com:YiHsinTseng/JobSubPub.git
+              git clone -b test-deploying https://github.com/YiHsinTseng/JobSubPub.git
             fi
 
             cd JobSubPub || exit
             git fetch origin
-            git reset --hard origin/master
+            git reset --hard origin/test-deploying
 
             cat <<EOF > .env
             PORT=$PORT
