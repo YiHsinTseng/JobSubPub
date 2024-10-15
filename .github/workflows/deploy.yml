@@ -77,28 +77,31 @@ jobs:
             fi
 
             cd Docker || exit
-            
+
             rm -f .env
             touch .env
-            echo PORT=$PORT > .env
-            echo PUB_PORT=$PUB_PORT > .env
-            echo PUBLISH_CRON_TIME=$PUBLISH_CRON_TIME > .env
-            echo CLIENT_PORT=$CLIENT_PORT > .env
-            echo DB_PORT=$DB_PORT > .env
-            echo DB_HOST=$DB_HOST > .env
-            echo DB_NAME=$DB_NAME > .env
-            echo DB_USER=$DB_USER > .env
-            echo DB_PASSWORD=$DB_PASSWORD > .env
-            echo MQTT_BROKER_URL=$MQTT_BROKER_URL > .env
-            echo MQTT_TOPIC=$MQTT_TOPIC > .env
-            echo MQTT_JOB=$MQTT_JOB > .env
-            echo MQTT_COMPANY=$MQTT_COMPANY > .env
-            echo QOS_LEVEL=$QOS_LEVEL > .env
-            echo PASSPORT_SECRET=$PASSPORT_SECRET > .env
-            echo JWT_EXPIRES_IN=$JWT_EXPIRES_IN > .env
-            echo REDIS_URL=$REDIS_URL > .env
-            echo LOG_FILE=$LOG_FILE > .env
-            cat .env
+            echo "Creating .env file..."
+            {
+                echo PORT=$PORT
+                echo PUB_PORT=$PUB_PORT
+                echo PUBLISH_CRON_TIME=$PUBLISH_CRON_TIME
+                echo CLIENT_PORT=$CLIENT_PORT
+                echo DB_PORT=$DB_PORT
+                echo DB_HOST=$DB_HOST
+                echo DB_NAME=$DB_NAME
+                echo DB_USER=$DB_USER
+                echo DB_PASSWORD=$DB_PASSWORD
+                echo MQTT_BROKER_URL=$MQTT_BROKER_URL
+                echo MQTT_TOPIC=$MQTT_TOPIC
+                echo MQTT_JOB=$MQTT_JOB
+                echo MQTT_COMPANY=$MQTT_COMPANY
+                echo QOS_LEVEL=$QOS_LEVEL
+                echo PASSPORT_SECRET=$PASSPORT_SECRET
+                echo JWT_EXPIRES_IN=$JWT_EXPIRES_IN
+                echo REDIS_URL=$REDIS_URL
+                echo LOG_FILE=$LOG_FILE
+            } >> .env
+            cat .env 
 
             sudo chmod 600 .env
 
