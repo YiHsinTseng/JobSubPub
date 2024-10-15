@@ -82,8 +82,8 @@ jobs:
             touch .env
             echo "Creating .env file..."
             {
-                echo PORT=$PORT
-                echo PUB_PORT=$PUB_PORT
+                echo PORT=${{ vars.PORT }}
+                echo PUB_PORT=${{ vars.PUB_PORT }}
                 echo PUBLISH_CRON_TIME=$PUBLISH_CRON_TIME
                 echo CLIENT_PORT=$CLIENT_PORT
                 echo DB_PORT=$DB_PORT
