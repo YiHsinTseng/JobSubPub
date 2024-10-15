@@ -36,10 +36,14 @@ class Source104(BaseSource):
           industry = job.find('span', class_='info-company-addon-type').text.strip()
           job_desc = job.find('div', class_='info-description').text.strip()  # 工作描述，要完整就要換地方爬
           job_exp = job.find('a', href=lambda x: x and 'jobexp' in x).text.strip()
-          try:
-            job_salary = job.find('a', attrs={'data-gtm-joblist': lambda x: x and x.startswith('職缺-薪資')}).text
-          except:
-            job_salary = None
+
+          job_salary_element = job.find('a', attrs={'data-gtm-joblist': lambda x: x and x.startswith('職缺-薪資')})
+          if job_salary_element and job_salary_element.text:
+              job_salary = job_salary_element.text
+          else:
+              job_salary = None
+              print("警告: 非月薪年薪制。")
+
           people = job.find('a', class_='action-apply__range').text.strip()[:-2].rstrip('人').strip()
           place = job.find('span', class_='info-tags__text').text.strip()
          
@@ -47,9 +51,19 @@ class Source104(BaseSource):
           #   job_title=data["header"]["jobName"]
           #   company_name=data["header"]["custName"]
           #   job_exp=data["data"]["condition"]["workExp"]
-          job_info=[item['description'] for item in data["data"]["condition"]["specialty"]]
-          job_condition= data["data"]["condition"]["other"]
-          update= data["data"]["header"]["appearDate"]
+
+          # 使用 get 方法安全獲取值，並提供默認值
+          job_info = [item.get('description') for item in data.get("data", {}).get("condition", {}).get("specialty", [])]
+          job_condition = data.get("data", {}).get("condition", {}).get("other")
+          update = data.get("data", {}).get("header", {}).get("appearDate")
+
+          # 如果 job_info 是空列表，則設置為 None
+          if not job_info:
+              job_info = None
+
+          if update is None:
+              print("警告: 找不到更新日期，職缺已關閉。")
+          
 
           job_instance = JobModel(
                 title=job_title,

@@ -6,46 +6,27 @@ import time
 import json
 # import csv
 from .pgUpdateHandler import PostgresHandler
+import threading
+from config import config 
+from .state_manager import log_state ,load_state,save_state
+
+import os
+from dotenv import load_dotenv
+
+# 加載 .env 文件中的環境變量
+load_dotenv()
 
 class JobService:
     def __init__(self, source):
         self.source = source
         self.state_file = f"./data/save_{source.__class__.__name__}.json"
-        # self.csv_file = "./data/jobs1111_20240807_node.csv"
+        self.log_file = os.getenv("LOG_FILE", "./data/log.txt")  # 默認值
         self.current_date_string = datetime.now().strftime("%Y%m%d")  # 當前日期字符串 #是否要UTC
         self.postgres_handler = PostgresHandler()  # 確保實例化 PostgresHandler
 
-    def load_state(self):
-        try:
-            with open(self.state_file, 'r') as f:
-                state = json.load(f)
-                file_date = state.get('date', None)
-                if file_date == self.current_date_string:
-                    return state
-                else:
-                    # 如果日期不匹配，則返回初始狀態
-                    return {'date': self.current_date_string, 'page': 1, 'in_page_count': 0, 'jobs_count': 0,'stop_error':'False'}
-        except FileNotFoundError:
-            return {'date': self.current_date_string,'page': 1, 'in_page_count': 0,'jobs_count':0,'stop_error':'False'}
-
-    def save_state(self, page, total_count, in_page_count, jobs_count,stop_error):
-        state = {'date': self.current_date_string, 'page': page, 'total_count': total_count, 'in_page_count': in_page_count, 'jobs_count': jobs_count,'stop_error':stop_error}
-        with open(self.state_file, 'w') as f:
-            json.dump(state, f)
-
-    # def save_to_csv(self, jobs, append=False):
-    #     mode = 'a' if append else 'w'
-    #     header = not append
-
-    #     with open(self.csv_file, mode, newline='', encoding='utf-8') as file:
-    #         writer = csv.DictWriter(file, fieldnames=['job_title', 'company', 'location', 'salary', 'description', 'url'])  # Adjust fieldnames as needed
-    #         if header:
-    #             writer.writeheader()
-    #         writer.writerows(jobs)
-
     def search_jobs(self, keyword):
         jobs = []
-        state = self.load_state()
+        state = load_state(self.state_file, self.current_date_string)
         total_count = 0
         jump = 0
         skip = []
@@ -66,11 +47,13 @@ class JobService:
                 job_list = joblist_dict["job_list"]
                 total_count = joblist_dict["total_count"]
 
+                if not config.job_running:  # 每次迴圈都檢查 job_running
+                    print("任務中止") #停止會想馬上開始還是重頭來過
+                    break
                 if restart_count>=30:
                     print("過度請求導致錯誤")
-                    self.save_state(page, total_count, in_page_count, jobs_count+len(jobs),stop_error="True")
-                    break
-                #停止
+                    save_state(self.state_file, self.current_date_string,page, total_count, in_page_count, jobs_count+len(jobs),stop_error="True")
+                    break #過度錯誤會想馬上人為介入還是重頭來過
                 #如果沒有total_count要怎麼推測？
                 remaining_count = total_count - jobs_count -len(jobs) - jump
                 if remaining_count <= 0:
@@ -97,7 +80,7 @@ class JobService:
                 ## 單頁存轉存csv append
                 #  單頁存轉存PostgreSQL(重新載入還是有可能數量出錯)
                 self.postgres_handler.insert_jobs_into_postgres(page_jobs)
-                self.save_state(page, total_count, in_page_count, jobs_count+len(jobs),stop_error="False")
+                save_state(self.state_file, self.current_date_string, page, total_count, in_page_count, jobs_count+len(jobs),stop_error="False")
                 page += 1
             except Exception as e:
                 print(f'請求失敗: {e}')
@@ -119,5 +102,7 @@ class JobService:
         elapsed_time = end_time - start_time
         print(f'搜尋耗時: {elapsed_time:.2f} 秒')
 
+        #如果完成或中止的話，就初始化紀錄（目前只要終止就存到log）
+        log_state(self.log_file, self.state_file ,self.current_date_string)     
         return total_count, jobs
 

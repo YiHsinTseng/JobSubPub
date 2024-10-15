@@ -27,7 +27,7 @@ class JobController:
         df = pd.DataFrame(all_jobs)
         current_date_time = datetime.now()
         date_string = current_date_time.strftime("%Y%m%d")
-        df.to_csv(f'data/jobs_{date_string}_{keyword}.csv', header=True, index=False)
+        df.to_csv(f'data/records/jobs_{date_string}_{keyword}.csv', header=True, index=False)
         
         return total_count_all_sources, all_jobs
 
