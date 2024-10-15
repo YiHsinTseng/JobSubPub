@@ -35,37 +35,37 @@ jobs:
           host: ${{ secrets.EC2_HOST }} 
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }} 
-        script: |
-          if [ ! -d "JobSubPub" ]; then 
-            git clone -b master git@github.com:YiHsinTseng/JobSubPub.git
-          fi
-
-          cd JobSubPub || exit
-          git fetch origin
-          git reset --hard origin/master
-
-          cat <<EOF > .env
-          PORT=$PORT
-          PUB_PORT=$PUB_PORT
-          PUBLISH_CRON_TIME=$PUBLISH_CRON_TIME
-          CLIENT_PORT=$CLIENT_PORT
-          DB_PORT=$DB_PORT
-          DB_HOST=$DB_HOST
-          DB_USER=$DB_USER
-          DB_PASSWORD=$DB_PASSWORD
-          MQTT_BROKER_URL=$MQTT_BROKER_URL
-          MQTT_TOPIC=$MQTT_TOPIC
-          MQTT_JOB=$MQTT_JOB
-          MQTT_COMPANY=$MQTT_COMPANY
-          QOS_LEVEL=$QOS_LEVEL
-          PASSPORT_SECRET=$PASSPORT_SECRET
-          JWT_EXPIRES_IN=$JWT_EXPIRES_IN
-          REDIS_URL=$REDIS_URL
-          EOF
-
-          sudo chmod 600 .env
-
-          cd Docker || exit
-          sudo docker system prune -a -f
-          docker-compose down --rmi all
-          docker-compose up --build -d
+          script: |
+            if [ ! -d "JobSubPub" ]; then 
+              git clone -b master git@github.com:YiHsinTseng/JobSubPub.git
+            fi
+  
+            cd JobSubPub || exit
+            git fetch origin
+            git reset --hard origin/master
+  
+            cat <<EOF > .env
+            PORT=$PORT
+            PUB_PORT=$PUB_PORT
+            PUBLISH_CRON_TIME=$PUBLISH_CRON_TIME
+            CLIENT_PORT=$CLIENT_PORT
+            DB_PORT=$DB_PORT
+            DB_HOST=$DB_HOST
+            DB_USER=$DB_USER
+            DB_PASSWORD=$DB_PASSWORD
+            MQTT_BROKER_URL=$MQTT_BROKER_URL
+            MQTT_TOPIC=$MQTT_TOPIC
+            MQTT_JOB=$MQTT_JOB
+            MQTT_COMPANY=$MQTT_COMPANY
+            QOS_LEVEL=$QOS_LEVEL
+            PASSPORT_SECRET=$PASSPORT_SECRET
+            JWT_EXPIRES_IN=$JWT_EXPIRES_IN
+            REDIS_URL=$REDIS_URL
+            EOF
+  
+            sudo chmod 600 .env
+  
+            cd Docker || exit
+            sudo docker system prune -a -f
+            docker-compose down --rmi all
+            docker-compose up --build -d
