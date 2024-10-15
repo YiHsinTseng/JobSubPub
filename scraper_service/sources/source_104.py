@@ -57,10 +57,6 @@ class Source104(BaseSource):
           job_condition = data.get("data", {}).get("condition", {}).get("other")
           update = data.get("data", {}).get("header", {}).get("appearDate")
 
-          # 如果 job_info 是空列表，則設置為 None
-          if not job_info:
-              job_info = None
-
           if update is None:
               print("警告: 找不到更新日期，職缺已關閉。")
           
