@@ -45,7 +45,7 @@ jobs:
             git fetch origin
             git reset --hard origin/test-deploying
 
-            cat <<EOF > .env
+            cat <<EOF > ./Docker/.env
             PORT=$PORT
             PUB_PORT=$PUB_PORT
             PUBLISH_CRON_TIME=$PUBLISH_CRON_TIME
