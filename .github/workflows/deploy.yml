@@ -75,5 +75,5 @@ jobs:
 
             cd Docker || exit
             sudo docker system prune -a -f
-            docker-compose down --rmi all
-            docker-compose up --build -d
+            sudo docker-compose down --rmi all
+            sudo docker-compose up --build -d
