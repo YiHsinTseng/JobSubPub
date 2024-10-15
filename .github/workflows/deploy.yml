@@ -35,6 +35,8 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }} 
           script: |
+            sudo apt-get update && sudo apt-get install git -y || sudo yum install git -y
+
             if [ ! -d "JobSubPub" ]; then 
               git clone -b test-deploying https://github.com/YiHsinTseng/tabcolab-api.git
             fi
