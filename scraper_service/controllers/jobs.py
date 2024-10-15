@@ -1,8 +1,7 @@
 import pandas as pd
 from datetime import datetime
 from services.jobs import JobService
-# from sources.source_1111 import Source1111
-# from sources.source_104 import Source104
+import os
 from utils.source_loader import source_loader
 
 class JobController:
@@ -27,7 +26,14 @@ class JobController:
         df = pd.DataFrame(all_jobs)
         current_date_time = datetime.now()
         date_string = current_date_time.strftime("%Y%m%d")
-        df.to_csv(f'data/records/jobs_{date_string}_{keyword}.csv', header=True, index=False)
+
+        directory = f'data/records'
+
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        csv_file_path = f'{directory}/jobs_{date_string}_{keyword}.csv'
+        df.to_csv(csv_file_path, header=True, index=False)
         
         return total_count_all_sources, all_jobs
 
