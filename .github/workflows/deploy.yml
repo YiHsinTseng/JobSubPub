@@ -47,7 +47,7 @@ jobs:
             else
               echo "Git is already installed."
             fi
-            
+
             if [ ! -d "JobSubPub" ]; then 
               git clone -b test-deploying https://github.com/YiHsinTseng/JobSubPub.git
             fi
@@ -55,29 +55,6 @@ jobs:
             cd JobSubPub || exit
             git fetch origin
             git reset --hard origin/test-deploying
-
-            cat <<EOF > ./Docker/.env
-            PORT=$PORT
-            PUB_PORT=$PUB_PORT
-            PUBLISH_CRON_TIME=$PUBLISH_CRON_TIME
-            CLIENT_PORT=$CLIENT_PORT
-            DB_PORT=$DB_PORT
-            DB_HOST=$DB_HOST
-            DB_NAME=$DB_NAME
-            DB_USER=$DB_USER
-            DB_PASSWORD=$DB_PASSWORD
-            MQTT_BROKER_URL=$MQTT_BROKER_URL
-            MQTT_TOPIC=$MQTT_TOPIC
-            MQTT_JOB=$MQTT_JOB
-            MQTT_COMPANY=$MQTT_COMPANY
-            QOS_LEVEL=$QOS_LEVEL
-            PASSPORT_SECRET=$PASSPORT_SECRET
-            JWT_EXPIRES_IN=$JWT_EXPIRES_IN
-            REDIS_URL=$REDIS_URL
-            LOG_FILE=$LOG_FILE
-            EOF
-
-            sudo chmod 600 .env
 
             if ! command -v docker &> /dev/null; then
               echo "Docker not found. Installing Docker..."
@@ -100,6 +77,30 @@ jobs:
             fi
 
             cd Docker || exit
+
+            sudo bash -c 'cat <<EOF > .env
+            PORT='$PORT'
+            PUB_PORT='$PUB_PORT'
+            PUBLISH_CRON_TIME='$PUBLISH_CRON_TIME'
+            CLIENT_PORT='$CLIENT_PORT'
+            DB_PORT='$DB_PORT'
+            DB_HOST='$DB_HOST'
+            DB_NAME='$DB_NAME'
+            DB_USER='$DB_USER'
+            DB_PASSWORD='$DB_PASSWORD'
+            MQTT_BROKER_URL='$MQTT_BROKER_URL'
+            MQTT_TOPIC='$MQTT_TOPIC'
+            MQTT_JOB='$MQTT_JOB'
+            MQTT_COMPANY='$MQTT_COMPANY'
+            QOS_LEVEL='$QOS_LEVEL'
+            PASSPORT_SECRET='$PASSPORT_SECRET'
+            JWT_EXPIRES_IN='$JWT_EXPIRES_IN'
+            REDIS_URL='$REDIS_URL'
+            LOG_FILE='$LOG_FILE'
+            EOF'
+
+            sudo chmod 600 .env
+
             sudo docker system prune -a -f
             sudo docker-compose down --rmi all
             sudo docker-compose up --build -d
