@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   redis:
     image: redis:latest
@@ -26,7 +24,6 @@ services:
       retries: 5
       start_period: 30s
       timeout: 10s
-
   postgres:
     image: postgres:16
     environment:
@@ -45,7 +42,6 @@ services:
       retries: 5
       start_period: 30s
       timeout: 10s
-
   scraper_service:
     build:
       context: ../
@@ -64,9 +60,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      # postgres:
+      #   condition: service_started
       publish_service:
         condition: service_started
-
   job_service:
     build:
       context: ../
@@ -80,9 +77,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      # postgres:
+      #   condition: service_started
       mosquitto:
         condition: service_started
-
   publish_service:
     build:
       context: ../
@@ -94,11 +92,12 @@ services:
       - "4010:4010"
     container_name: publish_service
     depends_on:
+      # postgres:
+      #   condition: service_started
       postgres:
         condition: service_healthy
       mosquitto:
         condition: service_started
-
   node_exporter:
     image: prom/node-exporter:latest
     container_name: node_exporter
@@ -109,7 +108,6 @@ services:
       - publish_service
       - job_service
       - prometheus
-
   postgres_exporter:
     image: quay.io/prometheuscommunity/postgres-exporter
     #這個需要是pg16
@@ -123,9 +121,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      # postgres:
+      #   condition: service_started
       prometheus:
         condition: service_started
-
   mosquitto_exporter:
     image: sapcc/mosquitto-exporter
     ports:
@@ -143,7 +142,6 @@ services:
       - ./monitor/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./monitor/data/prometheus:/prometheus
     restart: unless-stopped
-
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
