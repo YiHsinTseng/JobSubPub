@@ -51,6 +51,8 @@ JobSubPub旨在自動化定時從職缺網站爬取職缺資料，並根據使�
   - 外部服務透過 RESTful API 與應用伺服器互動，並使用 Socket.IO 即時向使用者推送通知，實現訂閱內容的即時顯示。
   - 額外設置 https://github.com/YiHsinTseng/NotificationSystem
 
+![Notification-System](img/Notification-System.png)
+
 - **監控與日誌記錄**  
   - 系統的可觀測性由 Prometheus 與 Grafana 提供，設置簡易監控指標，確保系統穩定運行。
 
@@ -86,7 +88,7 @@ JobSubPub旨在自動化定時從職缺網站爬取職缺資料，並根據使�
     LOG_FILE=./data/log.txt
     
     PUBLISH_CRON_TIME='00 22 * * *'
-    
+
     MQTT_BROKER_URL=mqtt://mosquitto:1884
     MQTT_TOPIC=notifications
     MQTT_JOB=job_id_channel
@@ -96,7 +98,7 @@ JobSubPub旨在自動化定時從職缺網站爬取職缺資料，並根據使�
     PASSPORT_SECRET=YOUR_SECRET
     JWT_EXPIRES_IN=1d
 
-    REDIS_URL='redis://my-redis:6379'
+    REDIS_URL=redis://my-redis:6379
     ```
 
 4. 執行 Docker 指令運行：
