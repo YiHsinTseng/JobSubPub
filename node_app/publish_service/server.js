@@ -10,14 +10,17 @@ const { monitoringMiddleware, prometheusMetricsHandler } = require('./metrics');
 const app = express();
 app.use(express.json());
 
-const CLIENT_PORT = process.env.CLIENT_PORT || 4000;
+
+const CORS_WHITE_LIST = process.env.WHITE_LIST.split(',');
 
 // 中間件來處理計時
 app.use(monitoringMiddleware);
 
 app.use(cors({ // 要注意不同網址問題不然會fetch失敗
-  origin: CLIENT_PORT,
+  origin: CORS_WHITE_LIST,
 }));
+
+
 app.use('/api', testRoutes);
 app.use(apiErrorHandler);
 
