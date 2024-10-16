@@ -83,6 +83,6 @@ jobs:
             } >> .env
             sudo chmod 600 .env
 
-            sudo docker system prune -a -f
-            sudo docker-compose down --rmi all
+            sudo docker system prune -f --volumes
+            sudo docker-compose down
             sudo docker-compose up --build -d

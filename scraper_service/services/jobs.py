@@ -2,13 +2,9 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 import time
-# import pandas as pd
-import json
-# import csv
 from .pgUpdateHandler import PostgresHandler
-import threading
-from config import config 
 from .state_manager import log_state ,load_state,save_state
+from job_state import job_state
 
 import os
 from dotenv import load_dotenv
@@ -46,8 +42,8 @@ class JobService:
                 joblist_dict = self.source.parse_source_job(base_url,keyword,soup=soup)
                 job_list = joblist_dict["job_list"]
                 total_count = joblist_dict["total_count"]
-
-                if not config.job_running:  # 每次迴圈都檢查 job_running
+                job_enabled=job_state.is_job_enabled()
+                if not job_enabled:  # 每次迴圈都檢查 全局job_enabled
                     print("任務中止") #停止會想馬上開始還是重頭來過
                     break
                 if restart_count>=30:
