@@ -19,9 +19,10 @@ const getTodayPublishedJobs = async (req, res, next) => {
     // count,update(Count) 用來分頁（未實作）//應該先做不分頁版本
 
     const pubbedInFo = req.body.data;
+    const {page} = req.body;
 
     const {
-      count, update, sub, exclude,
+      count, update, sub, exclude
     } = pubbedInFo;
 
     // 以jwt創建日期為判斷
@@ -31,7 +32,7 @@ const getTodayPublishedJobs = async (req, res, next) => {
       return res.status(400).json({ message });
     }
 
-    const result = await services.getPublishedJobsPaged(count, update, sub, exclude, iat_time.toUTCString());
+    const result = await services.getPublishedJobsPaged(count, update, sub, exclude, iat_time.toUTCString(),page);
 
     return res.status(200).json({ message: 'Success', result });
   } catch (error) {
