@@ -28,33 +28,39 @@ const getSubConditions = async (user_id) => {
 
 const addSubConditions = async (user_id, sub, exclude) => {
   const checkQuery = 'SELECT COUNT(*) FROM job_subscriptions WHERE user_id = $1';
+  const checkValues = [user_id];
+  const { rows } = await pool.query(checkQuery, checkValues);
 
-  const values = [user_id]; // 初始化值數組
-  const { rows } = await pool.query(checkQuery, values);
+  // TODO allowedFields如何增加維護性
+  // 獲取動態字段，都是要存到欄位名， 目前保留Exclude到名稱中
+  const allowedFields = ['industries', 'job_info', 'exclude_job_title']; // 限制欄位名，避免注入
+  const fields = [
+    ...Object.keys(sub).filter((key) => allowedFields.includes(key)),
+    ...Object.keys(exclude).filter((key) => allowedFields.includes(key)),
+  ];
 
-  const fields = [...Object.keys(sub), Object.keys(exclude)]; // 獲取動態字段，都是要存到欄位名
-  // 要不要保留Exclude
   const setClauseString = fields.map((field) => `${field} = EXCLUDED.${field}`).join(', ');
-
-  const data = { sub, exclude };// 但是轉成參數
-  Object.values(data).flatMap((item) => Object.values(item)).forEach((value) => {
-    values.push(JSON.stringify(value)); // 逐個推送元素
-  });
-
-  // 如果exclude的資料格式怎樣設計
   const insertQuery = `
   INSERT INTO job_subscriptions (user_id, ${fields.join(', ')}, created_at)
   VALUES ($1, ${fields.map((_, i) => `$${i + 2}::jsonb`).join(', ')}, NOW())
   ON CONFLICT (user_id) DO UPDATE 
   SET ${setClauseString}, created_at = NOW();
-`;
+  `;
+
+  // 將條件解構後個別加入查詢參數。
+  const data = { sub, exclude };
+  const conditionValues = Object.values(data)
+    .flatMap(Object.values)
+    .map((value) => JSON.stringify(value)); // 僅用於條件匹配，所以不會在前端渲染HTML。不做XSS處理
+
+  const queryValues = [user_id, ...conditionValues];
 
   const count = parseInt(rows[0].count, 10);
   if (count > 0) {
-    await pool.query(insertQuery, values);
+    await pool.query(insertQuery, queryValues);
     console.log('Record updated successfully');
   } else {
-    await pool.query(insertQuery, values);
+    await pool.query(insertQuery, queryValues);
     console.log('Record inserted successfully');
   }
 };

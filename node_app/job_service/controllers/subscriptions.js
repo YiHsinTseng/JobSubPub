@@ -25,12 +25,10 @@ const addSubConditions = async (req, res, next) => {
   try {
     const { user_id } = req.params;
     const { sub, exclude } = req.body.data;
-    // TODO data.sub,data.exlude方便驗證
 
     validateUser(user_id);
 
-    // sub需要校驗資料格式是否存在
-    await services.addSubConditions(user_id, sub, exclude);// 對訂閱來說這是不同的選項，並且每筆訂閱可以存不同深度資料
+    await services.addSubConditions(user_id, sub, exclude);
 
     res.status(200).json('Insert successful');
   } catch (error) {
