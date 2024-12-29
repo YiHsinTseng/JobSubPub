@@ -6,20 +6,22 @@ const jobCondGen = (conditions) => {
 
   let industryCondition = '';
   if (industries && industries.length > 0) {
-    industryCondition = `industry IN (${industries.map((_, i) => `$${i + 1}`).join(',')})`;
-    queryParams.push(...industries);
+    industryCondition = `industry ILIKE ANY (ARRAY[${industries.map((_, i) => `$${i + 1}`).join(',')}])`;//轉換成佔位符
+    queryParams.push(...industries.map(industry => `%${industry}%`)); //佔位符帶入模糊匹配
   }
 
   let job_infoCondition = '';
   if (job_info && job_info.length > 0) { 
-    job_infoCondition = `
-    EXISTS (
-      SELECT 1
-      FROM jsonb_array_elements(job_info) AS elem
-      WHERE elem->>0 IN (${job_info.map((_, i) => `$${i + industries.length + 1}`).join(',')})
-    )
-  `;
-    queryParams.push(...job_info);
+  //改成部分模糊匹配(%%) 不區分大小寫(ILIKE) 
+  job_infoCondition = `
+  EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(job_info) AS elem
+    WHERE elem->>0 ILIKE ANY (ARRAY[${job_info.map((_, i) => `$${i + industries.length + 1}`).join(',')}])
+ )
+`;//轉換成佔位符
+  //佔位符帶入模糊匹配
+    queryParams.push(...job_info.map(info => `%${info}%`));//佔位符帶入模糊匹配
     ;
   }
 
@@ -29,10 +31,10 @@ const jobCondGen = (conditions) => {
     NOT EXISTS (
       SELECT 1
       FROM job_subscriptions 
-      WHERE job_title LIKE ANY(ARRAY[${exclude_job_title.map((_, i) => `$${i + industries.length + job_info.length + 1}`).join(', ')}])
+      WHERE job_title ILIKE ANY(ARRAY[${exclude_job_title.map((_, i) => `$${i + industries.length + job_info.length + 1}`).join(', ')}])
     )
-  `;
-    queryParams.push(...exclude_job_title.map(title => `%${title}%`));
+  `;//轉換成佔位符
+    queryParams.push(...exclude_job_title.map(title => `%${title}%`)); //佔位符帶入模糊匹配
   }
 
   const conditionsArray = [];
