@@ -46,9 +46,6 @@ services:
     build:
       context: ../
       dockerfile: Docker/Dockerfile.python
-    ##取代資料夾內的.env
-    env_file:
-      - ./.env
     ports:
       - "5060:5060"
       - "8001:8001"
@@ -56,6 +53,7 @@ services:
     volumes:
       - ./scraper_service/data:/app/scraper_service/data
       - ../postgres_db:/app/postgres_db
+      - ./.env:/app/scraper_service/.env
     container_name: scraper_service
     depends_on:
       postgres:
@@ -66,8 +64,9 @@ services:
     build:
       context: ../
       dockerfile: Docker/Dockerfile.nodejs_job
-    env_file:
-      - ./.env
+    ##取代資料夾內的.env
+    volumes:
+      - ./.env:/app/.env
     working_dir: /app
     ports:
       - "4000:4000"
@@ -81,8 +80,8 @@ services:
     build:
       context: ../
       dockerfile: Docker/Dockerfile.nodejs_pub
-    env_file:
-      - ./.env
+    volumes:
+      - ./.env:/app/.env
     working_dir: /app
     ports:
       - "4010:4010"
