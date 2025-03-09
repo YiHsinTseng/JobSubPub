@@ -1,43 +1,39 @@
-class JobModel:
-    def __init__(self, title, company_name, industry, experience, description, salary, applicants, location, update_date, record_time, source, url,keywords, requirements, additional_conditions):
-        self.title = title
-        self.company_name = company_name
-        self.industry = industry
-        self.experience = experience
-        self.description = description
-        self.salary = salary
-        self.applicants = applicants
-        self.location = location
-        self.update_date = update_date
-        self.record_time = record_time
-        self.source = source
-        self.keywords = keywords
-        self.url = url
-        self.requirements = requirements
-        self.additional_conditions = additional_conditions
+from typing import List, Optional
+from pydantic import BaseModel, Field 
+from datetime import datetime
+import json  # 使用 json 來處理 JSON 字串
 
+"""專屬於資料庫欄位結構的轉換模型"""
+#因為我想要關聯直接用sql寫，用ORM感覺太肥大
+class JobModel(BaseModel):
+    #映射邏輯跟ORM不同
+    """外部輸入欄位名以title為主"""
+    #要對應SQL腳本順序，符合真實資料庫的命名
+    #所以外部如果是job_title就會出錯（js:title->pg:job_title）
+    job_title: str = Field(..., alias='title')
+    company_name: str = Field(..., alias='company_name')
+    industry: str = Field(..., alias='industry')
+    job_exp: str = Field(..., alias='experience')
+    job_desc: str = Field(..., alias='description')
+    job_info: List[str] = Field(..., alias='requirements')
+    job_condition: str = Field(..., alias='additional_conditions')
+    job_salary: Optional[str] = Field(None, alias='salary')  # Optional 字段
+    people: str = Field(0, alias='applicants')
+    place: str = Field(..., alias='location')
+    update_date: str = Field(..., alias='update_date')
+    record_time: datetime = Field(..., alias='record_time')
+    source: str = Field(..., alias='source')
+    keywords: str = Field(..., alias='keywords')
+    job_link: Optional[str] = Field(None, alias='url')  # Optional 字段
 
-    def to_dict(self):
-            """
-            Convert the Job instance to a general dictionary without FIELD_MAP.
-            """
-            return {
-                'title': self.title,
-                'company_name': self.company_name,
-                'industry': self.industry,
-                'experience': self.experience,
-                'description': self.description,
-                'salary': self.salary,
-                'applicants': self.applicants,
-                'location': self.location,
-                'update_date': self.update_date,
-                'record_time': self.record_time,
-                'source': self.source,
-                'keywords': self.keywords,
-                'url': self.url,
-                'requirements': self.requirements,
-                'additional_conditions': self.additional_conditions
-            }
+    class Config:
+        allow_population_by_field_name = True  # 允許直接使用 Python 變數名進行賦值
+        orm_mode = True
 
-    def to_dict_map(self): ##映射對前處理太浪費資源
-            return {key: getattr(self, value) for key, value in self.FIELD_MAP.items()}
+    """用於資料庫參數化轉型"""
+    def to_dict(self, use_alias=False):
+        data = self.dict(by_alias=use_alias)
+        #JSON轉成字串
+        if isinstance(data["job_info"], list):  # 使用 job_info (而非 requirements) 作為列表
+            data["job_info"] = json.dumps(data["job_info"])
+        return data

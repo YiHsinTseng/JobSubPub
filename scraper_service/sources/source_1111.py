@@ -7,12 +7,14 @@ from .base_source import BaseSource
 from models.jobs import JobModel
 
 class Source1111(BaseSource):
+    """客製化個別網站參數url"""
     def source_url(self, keyword, page):
         base_url = 'https://www.1111.com.tw'
         url = base_url + f'/search/job?ks={keyword}&page={page}'
         return base_url, url
-
+    """解析soup的規則""" 
     def parse_source_job(self, base_url, keyword, soup=None, job=None):
+        #解析單頁條件查詢結果
         if soup:
             job_list = soup.find_all('div', class_='job-item')##抓錯標籤了
             total_count = int(soup.find('div', class_='left').find("p").find("span").string)
@@ -20,6 +22,7 @@ class Source1111(BaseSource):
                 "job_list": job_list,
                 "total_count": total_count
             }
+        #解析個別工作資訊框以及其個別頁面結果
         elif job:
             # parsing logic specific to 1111
             job_title = job.find('div', class_='title position0').text 
@@ -33,6 +36,7 @@ class Source1111(BaseSource):
             taipei_tz = pytz.timezone('Asia/Taipei')
             update = (taipei_tz.localize(datetime.strptime(job.find("div", class_="data").text.strip(), "%Y/%m/%d")).astimezone(pytz.utc)+ timedelta(days=1)).isoformat()##ISO UTC存入但避免存入Date格式又太大誤差故修正
 
+            #分析個別工作頁面結果(更詳細結果)：透過解析HTML
             # Fetch detailed job page
             html_content2 = requests.get(job_link).text
             soup2 = BeautifulSoup(html_content2, 'html.parser')
@@ -51,23 +55,27 @@ class Source1111(BaseSource):
                 job_exp = job_skill.find("span", class_="job_info_title", text="工作經驗：").find_next_sibling().get_text(separator='\n', strip=True)
             except Exception as e:
                 job_exp = None
-            job_instance = JobModel(
-                title=job_title,
-                company_name=company_name,
-                industry=industry,
-                experience=job_exp,
-                description=job_desc,
-                salary=job_salary,
-                applicants=people,
-                location=place,
-                update_date=update,
-                record_time=datetime.now(pytz.utc).isoformat(), ##統一改成ISO8601保留時區資訊
-                source="1111",
-                keywords=keyword,
-                url=job_link,
-                requirements=job_info,
-                additional_conditions=job_condition
-            )
+                        
+            job_data = {
+                "title": job_title,
+                "company_name": company_name,
+                "industry": industry,
+                "experience": job_exp,
+                "description": job_desc,
+                "requirements": job_info,
+                "additional_conditions": job_condition,
+                "salary": job_salary,
+                "applicants": people,
+                "location": place,
+                "update_date": update,
+                "record_time": datetime.now(pytz.utc).isoformat(),  # 使用 ISO8601 格式保留時區資訊
+                "source": "1111",
+                "keywords": keyword,
+                "url": job_link
+            }
+
+            # 利於資料庫寫入時的資料驗證，要為了確保不同腳本沒有遺漏欄位，並且格式要正確。
+            job_instance = JobModel(**job_data)
             return job_instance
         else:
             return None

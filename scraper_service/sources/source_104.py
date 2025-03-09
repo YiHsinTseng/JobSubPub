@@ -8,6 +8,7 @@ from .base_source import BaseSource
 from models.jobs import JobModel
 
 class Source104(BaseSource):
+  """客製化個別網站參數url"""
   def source_url(self, keyword, page):
       base_url=f'https://www.104.com.tw'
       # url = base_url+f'/jobs/search/?ro=1&isnew=0&kwop=7&keyword={keyword}&mode=s&jobsource=2018indexpoc&page={page}'
@@ -17,9 +18,10 @@ class Source104(BaseSource):
       # 不確定是否因為被cloudflare抓到而有限制，而且需要爬蟲錯誤暫停機制，太頻繁也會被擋，但是page仍會繼續計算
       print(url)
       return base_url,url
-
+  """解析soup的規則""" 
   #base_url是為了統一格式
   def parse_source_job(self, base_url, keyword,soup=None, job=None):
+      #解析單頁條件查詢結果
       if soup:
           job_list = soup.find_all('div', class_='job-list-container')##改版
           api_url = base_url+f'/jobs/search/api/jobs?jobsource=2018indexpoc&keyword={keyword}&kwop=7&mode=s&order=15&page=1&pagesize=20&ro=1'
@@ -29,7 +31,9 @@ class Source104(BaseSource):
               "job_list": job_list,
               "total_count": total_count
           }
+      #解析個別工作資訊框以及其個別頁面結果
       elif job:
+          #分析個別工作資訊框(可考量都從個別頁面取得結果)
           job_title = job.find('a', class_='info-job__text').text.strip()
           job_link = job.find('a', class_='info-job__text')['href']
           company_name = job.find('a', class_='info-company__text').text.strip()
@@ -46,7 +50,8 @@ class Source104(BaseSource):
 
           people = job.find('a', class_='action-apply__range').text.strip()[:-2].rstrip('人').strip()
           place = job.find('span', class_='info-tags__text').text.strip()
-         
+          
+          #分析個別工作頁面結果(更詳細結果)：透過API
           data=make_request(job_link).json()
           #   job_title=data["header"]["jobName"]
           #   company_name=data["header"]["custName"]
@@ -59,25 +64,31 @@ class Source104(BaseSource):
 
           if update is None:
               print("警告: 找不到更新日期，職缺已關閉。")
-          
+         
+          """更好被測試"""        
+          #要符合JobModel格式(理想上不冗余的命名)
+          job_data = {
+            "title": job_title,
+            "company_name": company_name,
+            "industry": industry,
+            "experience": job_exp,
+            "description": job_desc,
+            "requirements": job_info,
+            "additional_conditions": job_condition,
+            "salary": job_salary,
+            "applicants": people,
+            "location": place,
+            "update_date": update,
+            "record_time": datetime.now(pytz.utc).isoformat(),  # Using ISO8601 with timezone info
+            "source": "104",
+            "keywords": keyword,
+            "url": job_link
+            }
 
-          job_instance = JobModel(
-                title=job_title,
-                company_name=company_name,
-                industry=industry,
-                experience=job_exp,
-                description=job_desc,
-                salary=job_salary,
-                applicants=people,
-                location=place,
-                update_date=update,
-                record_time=datetime.now(pytz.utc).isoformat(), ##統一改成ISO8601保留時區資訊
-                source="104",
-                keywords=keyword,
-                url=job_link,
-                requirements=job_info,
-                additional_conditions=job_condition
-            )
+          #print(job_data)
+
+          #利於資料庫寫入時的資料驗證，要為了確保不同腳本沒有遺漏欄位，並且格式要正確。
+          job_instance = JobModel(**job_data)
           return job_instance
       else:
           return None

@@ -14,4 +14,5 @@ COPY ../scraper_service /app/scraper_service
 RUN poetry install --without dev --no-root
 
 # 設定預設命令
-CMD ["poetry", "run", "python", "main.py"]
+# CMD ["poetry", "run", "python", "main.py"]
+CMD poetry run alembic upgrade head && poetry run python main.py
