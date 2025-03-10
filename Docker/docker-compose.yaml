@@ -35,13 +35,28 @@ services:
       - "5433:5432"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 10s
       retries: 5
       start_period: 30s
       timeout: 10s
+  #拆分兩步驟確保 migration
+  #Docker 只會 build 一次，然後兩個 container 共用這個 image。
+  init_migration:
+    build:
+      context: ../
+      dockerfile: Docker/Dockerfile.python
+    volumes:
+      - ./scraper_service/data:/app/scraper_service/data
+      - ../postgres_db:/app/postgres_db
+      - ./.env:/app/scraper_service/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: poetry run alembic upgrade head # 只執行 migration
+    restart: "no" # 跑完結束
   scraper_service:
     build:
       context: ../
@@ -49,17 +64,22 @@ services:
     ports:
       - "5060:5060"
       - "8001:8001"
-    ##保存container中的紀錄
     volumes:
       - ./scraper_service/data:/app/scraper_service/data
       - ../postgres_db:/app/postgres_db
       - ./.env:/app/scraper_service/.env
     container_name: scraper_service
     depends_on:
+      init_migration:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
-      publish_service:
-        condition: service_started
+    command: poetry run python main.py # 正式 scraper 啟動 (不跑 migration)
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://scraper_service:8001" ] # 你需要確認 /health 存在
+      interval: 10s
+      timeout: 5s
+      retries: 5
   job_service:
     build:
       context: ../
@@ -73,6 +93,8 @@ services:
     container_name: job_service
     depends_on:
       postgres:
+        condition: service_healthy
+      scraper_service:
         condition: service_healthy
       mosquitto:
         condition: service_started
@@ -88,6 +110,8 @@ services:
     container_name: publish_service
     depends_on:
       postgres:
+        condition: service_healthy
+      scraper_service:
         condition: service_healthy
       mosquitto:
         condition: service_started

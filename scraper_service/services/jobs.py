@@ -66,6 +66,8 @@ class JobService:
                 remaining_count = total_count - jobs_count -len(jobs) - jump
                 if remaining_count <= 0:
                     break
+                if total_count<jobs_count:
+                    break
 
                 """進入正式解析處理流程"""
                 """加入預期解析錯誤處理"""
@@ -109,10 +111,19 @@ class JobService:
                 restart_count += 1
                 
                 print("錯誤請求次數:",restart_count)
+
+                if restart_count >= 10:
+                    print("因過度請求而停止，通知開發者排查")
+                    save_state(self.state_file, self.current_date_string, page, total_count, in_page_count, jobs_count+len(jobs), stop_error="True")
+                    break
+
                 if restart_count>=5: #重試次數
                     print("過度請求導致錯誤")
-                    time.sleep(120) 
+                    time.sleep(10) 
                     continue
+
+                remaining_count = total_count - jobs_count -len(jobs) - jump
+                print(f'已獲取職缺數量：{jobs_count+len(jobs)}, 剩餘需要處理的數量：{remaining_count}, 跳過處理數量:{jump}')     
 
                 time.sleep(5)
                 continue

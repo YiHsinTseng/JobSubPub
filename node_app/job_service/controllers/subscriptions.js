@@ -60,9 +60,21 @@ const getSubscribedEntities = async (req, res, next) => {
   }
 };
 
+const getSubscribedJobs= async (req, res, next) => {
+  try {
+    const { user_id } = req.params;
+    validateUser(user_id);
+    const data = await services.getSubscribedJobs(user_id);
+    return res.status(200).json({message: 'Get successful', data} );
+  } catch (error) {
+    next(error);
+  }
+}
+
 const addSubscribedJob = async (req, res, next) => {
   try {
-    const { user_id } = req.body;
+    // const { user_id } = req.body;
+    const { user_id } = req.params;
     const { job_id } = req.params;
     console.log(user_id, job_id);
 
@@ -81,7 +93,8 @@ const addSubscribedJob = async (req, res, next) => {
 
 const deleteSubscribedJob = async (req, res, next) => {
   try {
-    const { user_id } = req.body;
+    // const { user_id } = req.body;
+    const { user_id } = req.params;
     const { job_id } = req.params;
     console.log(user_id, job_id);
     // data 是否存在？
@@ -99,7 +112,8 @@ const deleteSubscribedJob = async (req, res, next) => {
 
 const addSubscribedCompany = async (req, res, next) => {
   try {
-    const { user_id } = req.body;
+    // const { user_id } = req.body;
+    const { user_id } = req.params;
     const { company_name } = req.params;
     // data 是否存在？
     validateUser(user_id);
@@ -114,7 +128,8 @@ const addSubscribedCompany = async (req, res, next) => {
 
 const deleteSubscribedCompany = async (req, res, next) => {
   try {
-    const { user_id } = req.body;
+    // const { user_id } = req.body;
+    const { user_id } = req.params;
     const { company_name } = req.params;
     validateUser(user_id);
 
@@ -131,6 +146,7 @@ const deleteSubscribedCompany = async (req, res, next) => {
 module.exports = {
   getSubConditions,
   addSubConditions,
+  getSubscribedJobs,
   addSubscribedJob,
   deleteSubscribedJob,
   addSubscribedCompany,

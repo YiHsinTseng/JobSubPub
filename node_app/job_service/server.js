@@ -3,6 +3,8 @@ const cors = require('cors');
 
 const jobRoutes = require('./routes/jobs');
 const subRoutes = require('./routes/subscriptions');
+const userFavRoute = require('./routes/user-fav');
+
 
 const apiErrorHandler = require('./middlewares/apiErrorHandler');
 
@@ -23,6 +25,7 @@ app.use(monitoringMiddleware);
 
 app.use('/api', jobRoutes);
 app.use('/api', subRoutes);
+app.use('/api/users', userFavRoute);
 app.use(apiErrorHandler);
 
 // 添加一個 Prometheus 指標路由

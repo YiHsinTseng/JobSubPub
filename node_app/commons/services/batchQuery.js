@@ -6,7 +6,7 @@ const { getTime2ISO } = require('../utils/dateUtils');
 const getUsersSubscriptionConditionsPaginated = async (offset = 0, limit = 100) => {
   try {
     const query = `
-      SELECT user_id, industries, job_info, exclude_job_title 
+      SELECT user_id, industries, job_info, job_exp_range, exclude_job_title 
       FROM job_subscriptions 
       ORDER BY id 
       LIMIT $1 OFFSET $2
@@ -16,6 +16,7 @@ const getUsersSubscriptionConditionsPaginated = async (offset = 0, limit = 100) 
       user_id: row.user_id,
       industries: row.industries,
       job_info: row.job_info,
+      job_exp_range: row.job_exp_range,
       exclude_job_title: row.exclude_job_title,
     }));
   } catch (error) {
@@ -28,13 +29,13 @@ const getUsersFilteredJobs = async (usersConditions) => {
   try {
     const usersConditionStrings = usersConditions.map((userConditions) => {
       const { user_id } = userConditions;
-      const { industries, job_info, exclude_job_title } = userConditions;
+      const { industries, job_info, job_exp_range, exclude_job_title } = userConditions;
       const { conditionString ,queryParams} = jobCondGen(userConditions);
       return {
         user_id,
         conditionString,
         queryParams,
-        sub: { industries, job_info },
+        sub: { industries, job_info, job_exp_range },
         exclude: {exclude_job_title }
       };
     });

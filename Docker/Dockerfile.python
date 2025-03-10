@@ -11,8 +11,8 @@ RUN pip install --no-cache-dir poetry
 COPY ../scraper_service /app/scraper_service
 
 # 安裝 Python 依賴
-RUN poetry install --without dev --no-root
+RUN poetry install --no-root
 
 # 設定預設命令
 # CMD ["poetry", "run", "python", "main.py"]
-CMD poetry run alembic upgrade head && poetry run python main.py
+# CMD poetry run alembic upgrade head && poetry run python main.py

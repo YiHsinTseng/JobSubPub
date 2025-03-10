@@ -14,6 +14,7 @@ class JobModel(BaseModel):
     company_name: str = Field(..., alias='company_name')
     industry: str = Field(..., alias='industry')
     job_exp: str = Field(..., alias='experience')
+    job_exp_year: Optional[int] = Field(None, ge=0, alias='experience_year')  # 允許為 None 或 >= 0
     job_desc: str = Field(..., alias='description')
     job_info: List[str] = Field(..., alias='requirements')
     job_condition: str = Field(..., alias='additional_conditions')

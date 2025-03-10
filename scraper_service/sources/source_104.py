@@ -61,10 +61,16 @@ class Source104(BaseSource):
           job_info = [item.get('description') for item in data.get("data", {}).get("condition", {}).get("specialty", [])]
           job_condition = data.get("data", {}).get("condition", {}).get("other")
           update = data.get("data", {}).get("header", {}).get("appearDate")
+          job_desc= data.get("data", {}).get("jobDetail", {}).get("jobDescription")
 
           if update is None:
               print("警告: 找不到更新日期，職缺已關閉。")
-         
+          
+          job_exp_mapping = {
+            "經歷不拘": 0,
+            **{f"{i}年以上": i for i in range(1, 11)}  # 自動生成 1~10 年
+          }
+
           """更好被測試"""        
           #要符合JobModel格式(理想上不冗余的命名)
           job_data = {
@@ -72,6 +78,7 @@ class Source104(BaseSource):
             "company_name": company_name,
             "industry": industry,
             "experience": job_exp,
+            "experience_year":job_exp_mapping.get(job_exp, None),
             "description": job_desc,
             "requirements": job_info,
             "additional_conditions": job_condition,

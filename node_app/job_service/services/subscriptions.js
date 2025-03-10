@@ -3,7 +3,7 @@ const AppError = require('../utils/appError');
 
 const getSubConditions = async (user_id) => {
   try {
-    const query = 'SELECT industries, job_info, exclude_job_title FROM job_subscriptions WHERE user_id = $1';
+    const query = 'SELECT industries, job_info,job_exp_range, exclude_job_title FROM job_subscriptions WHERE user_id = $1';
     const result = await pool.query(query, [user_id]);
 
     if (result.rows.length === 0) {
@@ -13,11 +13,13 @@ const getSubConditions = async (user_id) => {
     const row = result.rows[0];
     const Industries = row.industries;
     const JobInfo = row.job_info;
+    const JobExpRange = row.job_exp_range
     const ExcludeJobTitle = row.exclude_job_title;
 
     return {
       industries: Industries,
       job_info: JobInfo,
+      job_exp_range: JobExpRange,
       exclude_job_title: ExcludeJobTitle,
     };
   } catch (err) {
@@ -33,13 +35,14 @@ const addSubConditions = async (user_id, sub, exclude) => {
 
   // TODO allowedFields如何增加維護性
   // 獲取動態字段，都是要存到欄位名， 目前保留Exclude到名稱中
-  const allowedFields = ['industries', 'job_info', 'exclude_job_title']; // 限制欄位名，避免注入
+  const allowedFields = ['industries', 'job_info', 'job_exp_range', 'exclude_job_title']; // 限制欄位名，避免注入
   const fields = [
     ...Object.keys(sub).filter((key) => allowedFields.includes(key)),
     ...Object.keys(exclude).filter((key) => allowedFields.includes(key)),
   ];
 
   const setClauseString = fields.map((field) => `${field} = EXCLUDED.${field}`).join(', ');
+  //這樣的存法會讓{數字}變成{字串}
   const insertQuery = `
   INSERT INTO job_subscriptions (user_id, ${fields.join(', ')}, created_at)
   VALUES ($1, ${fields.map((_, i) => `$${i + 2}::jsonb`).join(', ')}, NOW())
@@ -64,6 +67,43 @@ const addSubConditions = async (user_id, sub, exclude) => {
     console.log('Record inserted successfully');
   }
 };
+
+const getSubscribedJobs= async (user_id) => {
+  //TODO 內部資料格式待修正
+  // const query = `
+  // SELECT j.*
+  // FROM subscriptions_jobs sj
+  // JOIN jobs j
+  //   ON CAST(sj.job_id AS integer) = j.job_id
+  // WHERE sj.user_id=$1;
+  // `;
+
+  const query = `
+    SELECT 
+      js.*,
+      COALESCE(json_agg(j.tag_name) FILTER (WHERE j.tag_name IS NOT NULL), '[]') AS job_tags
+    FROM 
+      subscriptions_jobs sj
+    LEFT JOIN 
+      subscriptions_jobs_tags s ON s.job_id = sj.job_id
+    LEFT JOIN 
+      jobs js ON js.job_id = sj.job_id::integer
+    LEFT JOIN 
+      job_tags j ON s.tag_id = j.id
+    WHERE 
+      sj.user_id =$1
+    GROUP BY 
+      sj.user_id, js.job_id, sj.job_id;
+  `
+
+  try {
+    const result =await pool.query(query, [user_id]);
+    console.log(`Jobs has been fetched for user ${user_id}.`);
+    return result.rows; 
+  } catch (error) {
+    throw new Error('Error fetching subscribed job:', error);
+  }
+}
 
 const addSubscribedJob = async (user_id, job_id) => {
   const query = `
@@ -258,6 +298,7 @@ const createSubscribedEntities = async (user_id) => {
 module.exports = {
   getSubConditions,
   addSubConditions,
+  getSubscribedJobs,
   addSubscribedJob,
   deleteSubscribedJob,
   addSubscribedCompany,
