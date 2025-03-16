@@ -5,7 +5,6 @@ from sqlalchemy import pool
 
 from alembic import context
 
-
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -20,8 +19,6 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 target_metadata = None
-# from models import Base  # 假設你的模型在 your_project.models 中
-# target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -41,9 +38,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
- 
     url = config.get_main_option("sqlalchemy.url")
-
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -67,24 +62,22 @@ def run_migrations_online() -> None:
     #     prefix="sqlalchemy.",
     #     poolclass=pool.NullPool,
     # )
-    import os 
+
+    import os
     from dotenv import load_dotenv
+
     load_dotenv()
-    url = os.getenv("DATABASE_URL",config.get_main_option("sqlalchemy.url"))
-    
+    url = os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+
     # 不再從 ini 配置讀取 URL，而是使用自定義的 url
     connectable = engine_from_config(
-        {
-            "sqlalchemy.url": url  
-        },
+        {"sqlalchemy.url": url},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

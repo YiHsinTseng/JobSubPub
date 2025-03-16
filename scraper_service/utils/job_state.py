@@ -1,6 +1,6 @@
 class JobState:
     def __init__(self):
-        self.job_enabled = True  
+        self.job_enabled = True
 
     def start_job(self):
         self.job_enabled = True
@@ -11,5 +11,6 @@ class JobState:
     def is_job_enabled(self):
         return self.job_enabled
 
+
 # 創建全局的 JobState 實例
-job_state = JobState()
+scraper_state = JobState()

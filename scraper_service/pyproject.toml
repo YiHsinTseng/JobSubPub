@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "scraper_service"
+name = "scraper-service"
 version = "0.1.0"
 description = ""
 authors = ["easontseng <yhsints@gmail.com>"]
@@ -7,23 +7,18 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-requests = "^2.31.0"
+flask = "^3.1.0"
+requests = "^2.32.3"
 bs4 = "^0.0.2"
-datetime = "^5.5"
-schedule = "^1.2.2"
-python-dotenv = "^1.0.1"
-pandas = "^2.2.2"
-flask = "^3.0.3"
-prometheus-client = "^0.21.0"
-sqlalchemy = "^2.0.38"
-alembic = "^1.15.1"
 psycopg2-binary = "^2.9.10"
+dotenv = "^0.9.9"
+pytz = "^2025.1"
 pydantic = "^2.10.6"
+schedule = "^1.2.2"
+alembic = "^1.15.1"
+flask-cors = "^5.0.1"
+prometheus-client = "^0.21.1"
 
-
-
-[tool.poetry.group.dev.dependencies]
-jupyter = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core"]

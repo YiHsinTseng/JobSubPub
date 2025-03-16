@@ -1,10 +1,15 @@
 from abc import ABC, abstractmethod
 
+
 class BaseSource(ABC):
     @abstractmethod
-    def source_url(self, keyword, page):
+    def make_query_url(self, keyword, page):
         pass
 
     @abstractmethod
-    def parse_source_job(self, base_url, soup=None, job=None):
+    def parse_job_list_page(self, keyword, soup):
+        pass
+
+    @abstractmethod
+    def parse_job_detail(self, keyword, job):
         pass

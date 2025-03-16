@@ -1,101 +1,122 @@
-# import requests
-from utils.request_utils import make_request
-from bs4 import BeautifulSoup
-from datetime import datetime,timedelta
-# import time
+from datetime import datetime
 import pytz
 from .base_source import BaseSource
+from utils.request_utils import make_job_request
 from models.jobs import JobModel
 
+
 class Source104(BaseSource):
-  """客製化個別網站參數url"""
-  def source_url(self, keyword, page):
-      base_url=f'https://www.104.com.tw'
-      # url = base_url+f'/jobs/search/?ro=1&isnew=0&kwop=7&keyword={keyword}&mode=s&jobsource=2018indexpoc&page={page}'
-      #根據api取得資料
-      url = base_url+f'/jobs/search/?ro=1&kwop=7&keyword={keyword}&mode=s&jobsource=2018indexpoc&page={page}'
-    #   https://www.104.com.tw/jobs/search/?ro=1&kwop=7&keyword=node.js&mode=s&jobsource=2018indexpoc&page=1
-      # 不確定是否因為被cloudflare抓到而有限制，而且需要爬蟲錯誤暫停機制，太頻繁也會被擋，但是page仍會繼續計算
-      print(url)
-      return base_url,url
-  """解析soup的規則""" 
-  #base_url是為了統一格式
-  def parse_source_job(self, base_url, keyword,soup=None, job=None):
-      #解析單頁條件查詢結果
-      if soup:
-          job_list = soup.find_all('div', class_='job-list-container')##改版
-          api_url = base_url+f'/jobs/search/api/jobs?jobsource=2018indexpoc&keyword={keyword}&kwop=7&mode=s&order=15&page=1&pagesize=20&ro=1'
-          data=make_request(api_url).json()
-          total_count=data.get('metadata').get("pagination").get("total")
-          return {
-              "job_list": job_list,
-              "total_count": total_count
-          }
-      #解析個別工作資訊框以及其個別頁面結果
-      elif job:
-          #分析個別工作資訊框(可考量都從個別頁面取得結果)
-          job_title = job.find('a', class_='info-job__text').text.strip()
-          job_link = job.find('a', class_='info-job__text')['href']
-          company_name = job.find('a', class_='info-company__text').text.strip()
-          industry = job.find('span', class_='info-company-addon-type').text.strip()
-          job_desc = job.find('div', class_='info-description').text.strip()  # 工作描述，要完整就要換地方爬
-          job_exp = job.find('a', href=lambda x: x and 'jobexp' in x).text.strip()
+    """來源網站查詢url的形式"""
 
-          job_salary_element = job.find('a', attrs={'data-gtm-joblist': lambda x: x and x.startswith('職缺-薪資')})
-          if job_salary_element and job_salary_element.text:
-              job_salary = job_salary_element.text
-          else:
-              job_salary = None
-              print("警告: 非月薪年薪制。")
+    BASE_URL = f"https://www.104.com.tw"
 
-          people = job.find('a', class_='action-apply__range').text.strip()[:-2].rstrip('人').strip()
-          place = job.find('span', class_='info-tags__text').text.strip()
-          
-          #分析個別工作頁面結果(更詳細結果)：透過API
-          data=make_request(job_link).json()
-          #   job_title=data["header"]["jobName"]
-          #   company_name=data["header"]["custName"]
-          #   job_exp=data["data"]["condition"]["workExp"]
+    def make_query_url(self, keyword, page):
+        """但實際根據api取得資料"""
+        url = (
+            self.BASE_URL
+            + f"/jobs/search/?ro=1&kwop=7&keyword={keyword}&mode=s&jobsource=2018indexpoc&page={page}"
+        )
+        # url = BASE_URL+f'/jobs/search/?ro=1&isnew=0&kwop=7&keyword={keyword}&mode=s&jobsource=2018indexpoc&page={page}'
+        #   https://www.104.com.tw/jobs/search/?ro=1&kwop=7&keyword=node.js&mode=s&jobsource=2018indexpoc&page=1
+        # print(url)
+        return url
 
-          # 使用 get 方法安全獲取值，並提供默認值
-          job_info = [item.get('description') for item in data.get("data", {}).get("condition", {}).get("specialty", [])]
-          job_condition = data.get("data", {}).get("condition", {}).get("other")
-          update = data.get("data", {}).get("header", {}).get("appearDate")
-          job_desc= data.get("data", {}).get("jobDetail", {}).get("jobDescription")
+    """解析soup的規則"""
 
-          if update is None:
-              print("警告: 找不到更新日期，職缺已關閉。")
-          
-          job_exp_mapping = {
-            "經歷不拘": 0,
-            **{f"{i}年以上": i for i in range(1, 11)}  # 自動生成 1~10 年
-          }
+    def parse_job_list_page(self, keyword, soup):
+        """
+        解析職缺列表頁面，也包含API額外取得總數、頁數資訊
+        """
+        job_list = soup.find_all("div", class_="job-list-container")
 
-          """更好被測試"""        
-          #要符合JobModel格式(理想上不冗余的命名)
-          job_data = {
-            "title": job_title,
-            "company_name": company_name,
-            "industry": industry,
-            "experience": job_exp,
-            "experience_year":job_exp_mapping.get(job_exp, None),
-            "description": job_desc,
-            "requirements": job_info,
-            "additional_conditions": job_condition,
-            "salary": job_salary,
-            "applicants": people,
-            "location": place,
-            "update_date": update,
-            "record_time": datetime.now(pytz.utc).isoformat(),  # Using ISO8601 with timezone info
-            "source": "104",
-            "keywords": keyword,
-            "url": job_link
+        api_url = (
+            self.BASE_URL
+            + f"/jobs/search/api/jobs?jobsource=2018indexpoc&keyword={keyword}&kwop=7&mode=s&order=15&page=1&pagesize=20&ro=1"
+        )
+        data = make_job_request(api_url).json()
+
+        total_count = data.get("metadata", {}).get("pagination", {}).get("total", 0)
+        last_page = data.get("metadata", {}).get("pagination", {}).get("lastPage", 1)
+
+        return {
+            "job_list": job_list,
+            "total_count": total_count,
+            "last_page": last_page,
+        }
+
+    def parse_job_detail(self, keyword, job):
+        """
+        解析單一職缺詳情，也包含主頁爬取資料與API補充資料
+        """
+        try:
+            job_title = job.find("a", class_="info-job__text").text.strip()
+            job_link = job.find("a", class_="info-job__text")["href"]
+            company_name = job.find("a", class_="info-company__text").text.strip()
+            industry = job.find("span", class_="info-company-addon-type").text.strip()
+            job_desc_preview = job.find("div", class_="info-description").text.strip()
+            job_exp = job.find("a", href=lambda x: x and "jobexp" in x).text.strip()
+
+            # 薪資
+            job_salary_element = job.find(
+                "a",
+                attrs={"data-gtm-joblist": lambda x: x and x.startswith("職缺-薪資")},
+            )
+            job_salary = job_salary_element.text.strip() if job_salary_element else None
+
+            # 申請人數
+            people = job.find("a", class_="action-apply__range")
+            applicants = (
+                people.text.strip()[:-2].rstrip("人").strip() if people else None
+            )
+
+            # 工作地點
+            place = job.find("span", class_="info-tags__text").text.strip()
+
+            # API 補充詳細資料
+            api_data = make_job_request(job_link).json().get("data", {})
+
+            job_info = [
+                item.get("description")
+                for item in api_data.get("condition", {}).get("specialty", [])
+            ]
+            job_condition = api_data.get("condition", {}).get("other")
+            update = api_data.get("header", {}).get("appearDate")
+            job_desc = api_data.get("jobDetail", {}).get(
+                "jobDescription", job_desc_preview
+            )
+
+            # 經歷年數對應表
+            job_exp_mapping = {
+                "經歷不拘": 0,
+                **{f"{i}年以上": i for i in range(1, 11)},
             }
 
-          #print(job_data)
+            if not update:
+                print(f"[警告] 無法取得更新日期，可能職缺已關閉: {job_link}")
 
-          #利於資料庫寫入時的資料驗證，要為了確保不同腳本沒有遺漏欄位，並且格式要正確。
-          job_instance = JobModel(**job_data)
-          return job_instance
-      else:
-          return None
+            # 組成 JobModel 格式
+            job_data = {
+                "title": job_title,
+                "company_name": company_name,
+                "industry": industry,
+                "experience": job_exp,
+                "experience_year": job_exp_mapping.get(job_exp, None),
+                "description": job_desc,
+                "requirements": job_info,
+                "additional_conditions": job_condition,
+                "salary": job_salary,
+                "applicants": applicants,
+                "location": place,
+                "update_date": update,
+                "record_time": datetime.now(pytz.utc).isoformat(),  # ISO 格式
+                "source": "104",
+                "keywords": keyword,
+                "url": job_link,
+            }
+
+            # 回傳 Pydantic 模型，利於驗證
+            return JobModel(**job_data)
+
+        except Exception as e:
+            print(f"[錯誤] 解析職缺失敗: {e} | 職缺連結: {job_link}")
+            return None
