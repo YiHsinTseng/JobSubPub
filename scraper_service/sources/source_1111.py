@@ -127,7 +127,7 @@ class Source1111(BaseSource):
             "經歷不拘": 0,
             "不拘": 0,
             **{f"{i}年以上": i for i in range(1, 11)},  # 自動生成 1~10 年
-            **{f"{i}年以上工作經驗": i for i in range(1, 11)},  # 自動生成 1~10 年
+            **{f"{i}年以上經驗": i for i in range(1, 11)},  # 自動生成 1~10 年
         }
 
         job_data = {

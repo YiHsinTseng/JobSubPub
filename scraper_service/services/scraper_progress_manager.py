@@ -22,6 +22,7 @@ class StateManager:
         return self.state
 
     def save(self, state):
+        self.state = state
         with open(self.state_file, "w") as f:
             json.dump(state, f, ensure_ascii=False)
 
@@ -31,7 +32,7 @@ class StateManager:
             "total_count": 0,
             "daily_inserted_count": 0,
             "last_page": None,
-            "page": 1,
+            "page": 0,
             "last_inserted_count": 0,
             "page_failed": False,
         }

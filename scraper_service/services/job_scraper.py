@@ -77,14 +77,10 @@ class JobService:
                 current_state["total_count"] = joblist_dict["total_count"]
                 job_list = joblist_dict["job_list"]
 
-                current_state["daily_inserted_count"] = (
-                    prev_state["daily_inserted_count"]
-                    + current_state["last_inserted_count"]
-                )
-
                 remaining = (
                     current_state["total_count"]
-                    - current_state["daily_inserted_count"]
+                    - prev_state["daily_inserted_count"]
+                    - current_state["last_inserted_count"]
                     - skipped_jobs
                 )
 
@@ -96,11 +92,13 @@ class JobService:
                         or current_state["total_count"]
                         < current_state["last_inserted_count"]
                     ):
+                        current_state["page"] = current_state["page"] - 1
                         print("已達成爬取目標或超出預期數量，結束爬取")
                         break
                 else:
                     if current_state["page"] > current_state["last_page"]:
                         print("已達成爬取目標或超出預期數量，結束爬取")
+                        current_state["page"] = current_state["page"] - 1
                         break
 
                 if not job_list:
@@ -113,6 +111,11 @@ class JobService:
                 if total_parsed_jobs:
                     self.job_repository.insert_jobs_into_postgres(total_parsed_jobs)
                     current_state["last_inserted_count"] += len(total_parsed_jobs)
+
+                current_state["daily_inserted_count"] = (
+                    prev_state["daily_inserted_count"]
+                    + current_state["last_inserted_count"]
+                )
 
                 self.scraper_progress_manager.save(current_state)
                 page_fail_count = 0
@@ -134,6 +137,13 @@ class JobService:
                     self.scraper_progress_manager.save(current_state)
                     break
                 time.sleep(5)
+
+            remaining = (
+                current_state["total_count"]
+                - prev_state["daily_inserted_count"]
+                - current_state["last_inserted_count"]
+                - skipped_jobs
+            )
 
             # 紀錄當前迴圈爬取進度
             print(
