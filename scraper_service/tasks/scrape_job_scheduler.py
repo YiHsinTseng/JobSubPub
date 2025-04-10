@@ -19,7 +19,7 @@ def scrape_job(keywords=["Node.js"]):
 
 def schedule_and_run_jobs():
     scrape_job()
-    schedule.every().day.at("01:00").do(scrape_job)
+    schedule.every().day.at("00:00").do(scrape_job)
     # schedule.every(2).hours.do(job)
 
 
