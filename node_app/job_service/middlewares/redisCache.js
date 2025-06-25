@@ -15,7 +15,8 @@ const cacheMiddleware = async (req, res, next) => {
     next();
   } catch (err) {
     console.error('Error retrieving data from cache', err);
-    return res.status(500).send('Error retrieving data from cache');
+    next();
+    // return res.status(500).send('Error retrieving data from cache');
   }
 };
 
