@@ -84,6 +84,7 @@ JobSubPub旨在自動化定時從職缺網站爬取職缺資料，並根據使�
     DB_NAME=jobs
     DB_USER=test
     DB_PASSWORD=test
+    DATABASE_URL=postgresql+psycopg2://test:test@postgres:5432/jobs
 
     LOG_FILE=./data/log.txt
     
@@ -107,3 +108,7 @@ JobSubPub旨在自動化定時從職缺網站爬取職缺資料，並根據使�
     docker-compose up --build
     ```
 
+  ## **快速使用**
+  - 搭配前端使用，手動操作訂閱條件。
+  https://github.com/YiHsinTseng/NotificationSystem
+  - 可根據 /scrape 以及 /trigger-push 等api，測試立刻爬蟲以及立刻推送。
