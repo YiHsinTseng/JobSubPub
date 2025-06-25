@@ -55,8 +55,12 @@ def retry_on_429(max_retry=2, default_wait=5):
 
 @retry_on_429(max_retry=2, default_wait=1)
 def make_request(url):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.92 Safari/537.36",
+        "Referer": url,
+    }
     # 如果中斷會阻塞，記得替request 設定timeout
-    response = requests.get(url, timeout=10)
+    response = requests.get(url, headers=headers, timeout=10)
     response.raise_for_status()  # 確保拋出 HTTPError
     return response
 

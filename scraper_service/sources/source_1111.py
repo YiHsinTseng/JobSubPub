@@ -30,7 +30,7 @@ class Source1111(BaseSource):
 
         meta_description = soup.find("meta", attrs={"name": "description"})
         total_count_match = (
-            re.search(r"約(\d+)筆", meta_description["content"])
+            re.search(r"\((\d+)\)\s*個工作職缺機會", meta_description["content"])
             if meta_description
             else None
         )
@@ -47,34 +47,34 @@ class Source1111(BaseSource):
         job_link = self.BASE_URL + job.find("a")["href"]
 
         company_text = (
-            job.find("div", class_="line-clamp-1").get_text(strip=True).split("|")
+            job.find("div", class_="line-clamp-1").get_text(strip=True).split("｜")
         )
         company_name = company_text[0].strip()
         industry = company_text[1].strip() if len(company_text) > 1 else None
-
-        place_elements = job.select("a.hover\:underline")
-        place = (
-            place_elements[2].get_text(strip=True) if len(place_elements) > 2 else None
-        )
+        # place_elements = job.select("a.hover\:underline")
+        # place = (
+        #     place_elements[2].get_text(strip=True) if len(place_elements) > 2 else None
+        # )
+        place = job.find("h4", class_="job-card-condition__text").get_text(strip=True)
 
         people_text = (
-            job.find("div", class_="leading-[24px]").get_text(strip=True).split("|")
+            job.find("div", class_="job-summary").get_text(strip=True).split("｜")
         )
         people = (
-            people_text[1][5:].replace("人", "").replace("-", "~").strip()
+            people_text[1]
+            .replace("人應徵", "")
+            .replace("-", "~")
+            .replace(" ", "")
+            .strip()
             if len(people_text) > 1
             else None
         )
 
-        update_date_str = (
-            job.find("div", class_="text-gray-600")
-            .get_text(strip=True)
-            .replace(" / ", "/")
-        )
+        update_date_str = people_text[0].replace(" / ", "/").strip()
 
         try:
             taipei_tz = pytz.timezone("Asia/Taipei")
-            update = datetime.strptime(update_date_str, "%Y/%m/%d")
+            update = datetime.strptime(update_date_str, "%m/%d")
             current_year = datetime.now().year
             update = update.replace(year=current_year)
             update = taipei_tz.localize(update).date().isoformat()
@@ -115,17 +115,21 @@ class Source1111(BaseSource):
 
         try:
             job_exp = (
-                job_skill.find("p", string="工作經驗")
+                job_skill.find("h3", string="工作經驗")
                 .find_next("p")
                 .get_text(strip=True)
+                .replace(" ", "")
             )
         except Exception as e:
             job_exp = None
+
+        # print(job_exp)
 
         # 映射工作經驗的年數
         job_exp_mapping = {
             "經歷不拘": 0,
             "不拘": 0,
+            "半年經驗": 1,
             **{f"{i}年以上": i for i in range(1, 11)},  # 自動生成 1~10 年
             **{f"{i}年以上經驗": i for i in range(1, 11)},  # 自動生成 1~10 年
         }
