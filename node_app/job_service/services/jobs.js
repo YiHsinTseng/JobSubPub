@@ -32,10 +32,19 @@ const getPublishedJobsPaged = async (count, update, sub, exclude, dateString, pa
     // 生成查詢化參數
     const { conditionString, queryParams } = jobCondGen(condition);// 聚合所有篩選與排除條件
     queryParams.push(dateString);
-
+    // 爲避免tag刷新時有N+1問題所以結果回傳時也關聯job_tags
     const query = `
-    SELECT *
+    SELECT jobs.*,agg_tags.job_tags
     FROM jobs
+    LEFT JOIN (
+      SELECT 
+        s.job_id, 
+        ARRAY_AGG(jt.tag_name) AS job_tags
+      FROM subscriptions_jobs_tags AS s
+      JOIN job_tags jt ON s.tag_id = jt.id
+      GROUP BY s.job_id
+    ) AS agg_tags 
+    ON jobs.job_id = agg_tags.job_id:: integer
     WHERE ${conditionString}
     AND update_date = $${queryParams.length}
     ORDER BY update_date DESC
